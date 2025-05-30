@@ -30,6 +30,11 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
         unsigned int blockExp = (size + minBlockSize - 1) / minBlockSize;
         allocateVirtualBlocks(root, blockExp, maxBlockExp);
     }
+    printf("memory pool initialized with base address: %p, size: %u bytes\n", memBase, memSize);
+    printf("Minimum block size: %u bytes, Maximum block size: %u bytes\n", minBlockSize, maxBlockSize);
+    printf("Minimum block exponent: %u, Maximum block exponent: %u\n", minBlockExp, maxBlockExp);
+    printf("Aligned base address: %p, Aligned size: %u bytes\n", alignedBase, alignedSize);
+    printf("offset: %u bytes\n", offset);
 }
 
 void Buddy::allocateVirtualBlocks(Node *node, unsigned int blockExp, unsigned int depthExp){
