@@ -35,7 +35,7 @@
 
 using namespace std;
 
-#ifndef WITH_PROCESSES
+#ifdef WITH_PROCESSES
 
 namespace miosix {
 
