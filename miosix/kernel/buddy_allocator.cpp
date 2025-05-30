@@ -283,11 +283,11 @@ void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, un
 
         // print the value of the node
         if (node->unusable) {
-            std::cout << depthExp << " UNUSABLE" << memLocation << std::endl;
+            std::cout << depthExp << " UNUSABLE " << memLocation << std::endl;
         } else if (node->occupied) {
-            std::cout << depthExp << " OCCUPIED" << memLocation << std::endl;
+            std::cout << depthExp << " OCCUPIED " << memLocation << std::endl;
         } else {
-            std::cout << depthExp << " FREE" << memLocation << std::endl;
+            std::cout << depthExp << " FREE " << memLocation << std::endl;
         }
         
         unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
