@@ -21,7 +21,7 @@ public:
      * \param size The size of memory to allocate in bytes.
      * \return Pointer to the allocated memory, or nullptr if allocation fails.
      */
-    unsigned int *allocate(unsigned int size);
+    pair<unsigned int *, unsigned int>allocate(unsigned int size);
 
     /**
      * \brief Free the allocated memory block.

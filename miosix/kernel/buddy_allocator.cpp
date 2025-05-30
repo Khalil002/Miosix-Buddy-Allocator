@@ -59,7 +59,7 @@ Buddy::~Buddy()
     destroyTree(root);
 }
 
-unsigned int *Buddy::allocate(unsigned int size){
+pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
     if (size == 0 || size > maxBlockSize) {
         throw invalid_argument("Invalid allocation size.");
     }
@@ -69,11 +69,13 @@ unsigned int *Buddy::allocate(unsigned int size){
         throw invalid_argument("Requested size is out of bounds.");
     }
 
+    unsigned int *ptr;
     if(blockExp == maxBlockExp && root->occupied == false){
         root->occupied = true; // Mark the root as occupied
-        return alignedBase; // If the maximum block size is requested and the root is not occupied, return the aligned base address
+        ptr = alignedBase; // If the maximum block size is requested and the root is not occupied, return the aligned base address
     }
-    return allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
+    ptr = allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
+    return make_pair(ptr, 1<<blockExp); // Return the pointer to the allocated memory and its size
 }
 
 unsigned int *Buddy::allocateRecursive(Node *node, unsigned int blockExp, unsigned int depthExp, unsigned int *memLocation){

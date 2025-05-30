@@ -35,15 +35,17 @@
 
 using namespace std;
 
-#ifdef WITH_PROCESSES
+#ifndef WITH_PROCESSES
 
 namespace miosix {
 
+#ifndef BMA
 ///This constant specifies the size of the minimum allocatable block,
 ///in bits. So for example 10 is 1KB.
 static const unsigned int blockBits=10;
 ///This constant is the the size of the minimum allocatable block, in bytes.
 static const unsigned int blockSize=1<<blockBits;
+#endif //BMA
 
 ProcessPool& ProcessPool::instance()
 {
@@ -71,8 +73,10 @@ pair<unsigned int *, unsigned int> ProcessPool::allocate(unsigned int size)
     if((size & (size - 1)) || size<blockSize)
             throw runtime_error("ProcessPool::allocate unsupported size");
     #endif //TEST_ALLOC
+
     if(size>poolSize) throw bad_alloc();
     
+    #ifndef BMA
     unsigned int offset=0;
     if(reinterpret_cast<unsigned int>(poolBase) % size)
         offset=size-(reinterpret_cast<unsigned int>(poolBase) % size);
@@ -96,6 +100,14 @@ pair<unsigned int *, unsigned int> ProcessPool::allocate(unsigned int size)
         return make_pair(result,size);
     }
     throw bad_alloc();
+    #else //BMA
+    try {
+        return buddy.allocate(size);
+    } catch (const std::bad_alloc& e) {
+        cerr << "Error in ProcessPool::allocate: " << e.what() << endl;
+        throw; // Rethrow the exception to indicate allocation failure
+    }
+    #endif //BMA
 }
 
 void ProcessPool::deallocate(unsigned int *ptr)
@@ -103,6 +115,8 @@ void ProcessPool::deallocate(unsigned int *ptr)
     #ifndef TEST_ALLOC
     miosix::Lock<miosix::FastMutex> l(mutex);
     #endif //TEST_ALLOC
+
+    #ifndef BMA
     map<unsigned int*, unsigned int>::iterator it= allocatedBlocks.find(ptr);
     if(it==allocatedBlocks.end())
     #ifndef TEST_ALLOC
@@ -115,21 +129,87 @@ void ProcessPool::deallocate(unsigned int *ptr)
                            reinterpret_cast<unsigned int>(poolBase))/blockSize;
     for(unsigned int i=firstBit;i<firstBit+size;i++) clearBit(i);
     allocatedBlocks.erase(it);
+    #else //BMA
+    try {
+        buddy.deallocate(ptr);
+    } catch (const std::runtime_error& e) {
+        cerr << "Error in ProcessPool::deallocate: " << e.what() << endl;
+        throw; // Rethrow the exception to indicate deallocation failure
+    }
+    #endif //BMA
+}
+
+unsigned int *ProcessPool::reallocate(unsigned int *ptr, unsigned int newSize){
+    try {
+        #ifndef TEST_ALLOC
+        miosix::Lock<miosix::FastMutex> l(mutex);
+        #endif //TEST_ALLOC
+
+        buddy.reallocate(ptr, newSize);
+    } catch (const std::exception& e) {
+        cerr << "Error in ProcessPool::reallocate: " << e.what() << endl;
+        throw; // Rethrow the exception to indicate reallocation failure
+    }
 }
 
 ProcessPool::ProcessPool(unsigned int *poolBase, unsigned int poolSize)
     : poolBase(poolBase), poolSize(poolSize)
 {
+    #ifndef BMA
     int numBytes=poolSize/blockSize/8;
     bitmap=new unsigned int[numBytes/sizeof(unsigned int)];
     memset(bitmap,0,numBytes);
+    #else //BMA
+    try {
+        buddy = new Buddy(poolBase, poolSize);
+    } catch (const std::exception& e) {
+        cerr << "Error in ProcessPool constructor: " << e.what() << endl;
+        throw;
+    }
+    #endif //BMA
 }
 
 ProcessPool::~ProcessPool()
 {
+    #ifndef BMA
     delete[] bitmap;
+    #else //BMA
+    delete buddy;
+    #endif //BMA
 }
 
+#ifdef TEST_ALLOC
+void ProcessPool::printAllocatedBlocks()
+{
+    #ifndef BMA
+    using namespace std;
+    map<unsigned int*, unsigned int>::iterator it;
+    cout<<endl;
+    for(it=allocatedBlocks.begin();it!=allocatedBlocks.end();it++)
+        cout <<"block of size " << it->second
+                << " allocated @ " << it->first<<endl;
+    
+    cout<<"Bitmap:"<<endl;
+    const int SHIFT = 8 * sizeof(unsigned int);
+    const unsigned int MASK = 1 << (SHIFT-1);
+    int bitarray[32];
+    for(int i=0; i<(poolSize/blockSize)/(sizeof(unsigned int)*8);i++)
+    {   
+        int value=bitmap[i];
+        for ( int j = 0; j < SHIFT; j++ ) 
+        {
+            bitarray[31-j]= ( value & MASK ? 1 : 0 );
+            value <<= 1;
+        }
+        for(int j=0;j<32;j++)
+            cout<<bitarray[j];
+        cout << endl;
+    }  
+    #else //BMA
+    buddy.printBuddy();
+    #endif //BMA
+}
+#endif //TEST_ALLOC
 } //namespace miosix
 
 #ifdef TEST_ALLOC
@@ -140,7 +220,11 @@ int main()
     ProcessPool& pool=ProcessPool::instance();
     while(1)
     {
+        #ifndef BMA
         cout<<"a<size(exponent)>|d<addr>"<<endl;
+        #else //BMA
+        cout<<"a<size(exponent)>|d<addr>|r<addr><size(exponent)>"<<endl;
+        #endif //BMA
         unsigned int param;
         char op;
         string line;
@@ -167,6 +251,19 @@ int main()
                 }
                 pool.printAllocatedBlocks();
                 break;
+            #ifdef BMA
+            case 'r':
+                unsigned int newSize;
+                unsigned int ptr;
+                ss>>hex>>ptr>>dec>>newSize;
+                try {
+                    pool.reallocate(reinterpret_cast<unsigned int*>(ptr), 1<<newSize);
+                } catch(exception& e) {
+                    cout<<typeid(e).name();
+                }
+                pool.printAllocatedBlocks();
+                break;
+            #endif //BMA
             default:
                 cout<<"Incorrect option"<<endl;
                 break;
