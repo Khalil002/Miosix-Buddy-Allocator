@@ -106,7 +106,7 @@ pair<unsigned int *, unsigned int> ProcessPool::allocate(unsigned int size)
     throw bad_alloc();
     #else //BMA
     try {
-        return buddy.allocate(size);
+        return buddy->allocate(size);
     } catch (const std::bad_alloc& e) {
         cerr << "Error in ProcessPool::allocate: " << e.what() << endl;
         throw; // Rethrow the exception to indicate allocation failure
@@ -135,7 +135,7 @@ void ProcessPool::deallocate(unsigned int *ptr)
     allocatedBlocks.erase(it);
     #else //BMA
     try {
-        buddy.deallocate(ptr);
+        buddy->deallocate(ptr);
     } catch (const std::runtime_error& e) {
         cerr << "Error in ProcessPool::deallocate: " << e.what() << endl;
         throw; // Rethrow the exception to indicate deallocation failure
@@ -150,7 +150,7 @@ unsigned int *ProcessPool::reallocate(unsigned int *ptr, unsigned int newSize){
         miosix::Lock<miosix::FastMutex> l(mutex);
         #endif //TEST_ALLOC
 
-        buddy.reallocate(ptr, newSize);
+        buddy->reallocate(ptr, newSize);
     } catch (const std::exception& e) {
         cerr << "Error in ProcessPool::reallocate: " << e.what() << endl;
         throw; // Rethrow the exception to indicate reallocation failure
@@ -212,7 +212,7 @@ void ProcessPool::printAllocatedBlocks()
         cout << endl;
     }  
     #else //BMA
-    buddy.printBuddy();
+    buddy->printBuddy();
     #endif //BMA
 }
 #endif //TEST_ALLOC
