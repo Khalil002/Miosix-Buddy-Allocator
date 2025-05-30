@@ -86,7 +86,7 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int blockExp, unsign
         return nullptr; // Reached the minimum block size without finding a suitable block
     }
 
-    if(blockExp == depthExp){
+    if(blockExp == depthExp && node->left == nullptr && node->right == nullptr){
         node->occupied = true; // Mark the node as occupied
         return memLocation; // Return the memory location for this block
     }
