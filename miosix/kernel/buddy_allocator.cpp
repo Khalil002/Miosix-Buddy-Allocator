@@ -71,8 +71,10 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
 
     unsigned int *ptr;
     if(blockExp == maxBlockExp && root->occupied == false && root->left == nullptr && root->right == nullptr) {
+        printf("Allocating maximum block size: %u bytes\n", 1 << blockExp);
         root->occupied = true; // Mark the root as occupied
         ptr = alignedBase; // If the maximum block size is requested and the root is not occupied, return the aligned base address
+        return make_pair(ptr, 1<<blockExp); // Return the pointer to the allocated memory and its size
     }
     ptr = allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
     return make_pair(ptr, 1<<blockExp); // Return the pointer to the allocated memory and its size
