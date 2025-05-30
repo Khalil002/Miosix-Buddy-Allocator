@@ -109,6 +109,7 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int blockExp, unsign
 
     if (node->left == nullptr)
         node->left = new Node();
+        node->left->parent = node; // Set parent for left child
 
     // Try allocating in left subtree
     unsigned int* leftResult = allocateRecursive(node->left, blockExp, depthExp - 1, memLocation);
@@ -118,6 +119,7 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int blockExp, unsign
     // Create right if needed
     if (node->right == nullptr)
         node->right = new Node();
+        node->right->parent = node; // Set parent for right child
 
     // Calculate new memory location for right buddy
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
