@@ -51,13 +51,18 @@ void Buddy::allocateVirtualBlocks(Node *node, unsigned int blockExp, unsigned in
     }
 
     if(blockExp == depthExp){
-        node->occupied = true; // Mark the node as occupied
-        node->unusable = true; // Mark the node as unusable
-        return; // Return the memory location for this block
+        if(node->left == nullptr && node->right == nullptr){
+            node->occupied = true; // Mark the node as occupied
+            node->unusable = true; // Mark the node as unusable
+            return;
+        }else{
+            return; 
+        }
     }
 
     //we allocate virtual blocks on the right most side of the tree    
     node->right = new Node();
+    node->right->parent = node; // Set parent for right child
     // Calculate new memory location for right buddy
 
     // Try allocating in right subtree
@@ -107,20 +112,20 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int blockExp, unsign
         }
     }
 
-    if (node->left == nullptr)
+    if (node->left == nullptr){
         node->left = new Node();
         node->left->parent = node; // Set parent for left child
-
+    }
     // Try allocating in left subtree
     unsigned int* leftResult = allocateRecursive(node->left, blockExp, depthExp - 1, memLocation);
     if (leftResult != nullptr)
         return leftResult;
 
     // Create right if needed
-    if (node->right == nullptr)
+    if (node->right == nullptr){
         node->right = new Node();
         node->right->parent = node; // Set parent for right child
-
+    }
     // Calculate new memory location for right buddy
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
     unsigned int* rightMemLocation = reinterpret_cast<unsigned int*>(
@@ -217,6 +222,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int new_size){
     unsigned int *new_ptr = result.first;
 
     if (new_ptr == nullptr) {
+        printf("Reallocation failed: Not enough memory to allocate %u bytes\n", new_size);
         new_ptr = allocateSpecific(root, blockExp, maxBlockExp, alignedBase, ptr);
     }
     return new_ptr;
@@ -254,10 +260,13 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int blockExp, unsigne
     }
 
     if(blockExp == depthExp){
-        node->occupied = true; // Mark the node as occupied
-        return memLocation; // Return the memory location for this block
+        if(node->left == nullptr && node->right == nullptr){
+            node->occupied = true; // Mark the node as occupied
+            return memLocation; // Return the memory location for this block
+        }else{
+            return nullptr; // If the node already has children, it means it's not a leaf node, so we cannot allocate here
+        }
     }
-
 
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
     unsigned int* leftMemLocation = memLocation;
@@ -266,8 +275,19 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int blockExp, unsigne
     
     unsigned int *result;
     if(memLocation == ptr){
+        if (node->left == nullptr){
+            node->left = new Node();
+            node->left->parent = node; // Set parent for left child
+        }
+        // Try allocating in left subtree
         result = allocateSpecific(node->left, blockExp, depthExp - 1, leftMemLocation, ptr);
     }else{
+        // Create right if needed
+        if (node->right == nullptr){
+            node->right = new Node();
+            node->right->parent = node; // Set parent for right child
+        }
+            
         result = allocateSpecific(node->right,  blockExp, depthExp - 1, rightMemLocation, ptr);
     }
     return result;
