@@ -273,7 +273,7 @@ void Buddy::destroyTree(Node* node)
     delete node;
 }
 
-void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp)
+void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation)
 {
     if( node != nullptr )
     {
@@ -283,17 +283,20 @@ void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, un
 
         // print the value of the node
         if (node->unusable) {
-            std::cout << depthExp << " UNUSABLE" << std::endl;
+            std::cout << depthExp << " UNUSABLE" << memLocation << std::endl;
         } else if (node->occupied) {
-            std::cout << depthExp << " OCCUPIED" << std::endl;
+            std::cout << depthExp << " OCCUPIED" << memLocation << std::endl;
         } else {
-            std::cout << depthExp << " FREE" << std::endl;
+            std::cout << depthExp << " FREE" << memLocation << std::endl;
         }
         
-
+        unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
+        unsigned int* leftMemLocation = memLocation;
+        unsigned int* rightMemLocation = reinterpret_cast<unsigned int*>(
+            reinterpret_cast<unsigned int>(memLocation) + local_offset);
         // enter the next tree level - left and right branch
-        printBT( prefix + (isLeft ? "│   " : "    "), node->left, true, depthExp - 1);
-        printBT( prefix + (isLeft ? "│   " : "    "), node->right, false, depthExp - 1);
+        printBT( prefix + (isLeft ? "│   " : "    "), node->left, true, depthExp - 1, leftMemLocation);
+        printBT( prefix + (isLeft ? "│   " : "    "), node->right, false, depthExp - 1, rightMemLocation);
     }
 }
 

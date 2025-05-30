@@ -62,7 +62,7 @@ private:
     void backPropagateDeallocate(Node *node);
     unsigned int get_exp_of_block(Node *node, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr);
     unsigned int *allocateSpecific(Node *node, unsigned int blockExp, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr);
-    void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp);
+    void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
 
     Node* root;
     unsigned int *memBase;
