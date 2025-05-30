@@ -302,6 +302,6 @@ void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, un
 
 void Buddy::printBuddy()
 {
-    printBT("", root, false, maxBlockExp);  
+    printBT("", root, false, maxBlockExp, alignedBase);  
 }
 
