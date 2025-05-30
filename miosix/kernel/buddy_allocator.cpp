@@ -16,7 +16,12 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
     }
     // Align the base address to the minimum block size (1 to 1023 bytes will be padded)
     unsigned int baseAddress = reinterpret_cast<unsigned int>(memBase);
-    offset = minBlockSize - baseAddress % minBlockSize; // Offset to align the base address
+    if(baseAddress % minBlockSize != 0) {
+        offset = minBlockSize - baseAddress % minBlockSize; // Offset to align the base address
+    }else{
+        offset = 0; // No offset needed if already aligned
+    }
+    
     unsigned int alignedBaseAddress = baseAddress + offset;
     alignedBase = reinterpret_cast<unsigned int*>(alignedBaseAddress);
     alignedSize = baseAddress + memSize - alignedBaseAddress; // Size of the aligned memory pool
