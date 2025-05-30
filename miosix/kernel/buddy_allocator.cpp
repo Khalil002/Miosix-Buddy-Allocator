@@ -178,6 +178,11 @@ void Buddy::backPropagateDeallocate(Node *node) {
     if(!node->occupied && !node->unusable &&
         node->left == nullptr && node->right == nullptr) {
         Node* parentPtr = node->parent;
+        if(node->parent->left == node) {
+            node->parent->left = nullptr; // Remove the left child
+        } else {
+            node->parent->right = nullptr; // Remove the right child
+        }
         delete node; // Deallocate the current node
         backPropagateDeallocate(parentPtr); // Backpropagate to parent
     }
