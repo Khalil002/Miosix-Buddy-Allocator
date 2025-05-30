@@ -283,11 +283,11 @@ void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, un
 
         // print the value of the node
         if (node->unusable) {
-            std::cout << depthExp+" UNUSABLE" << std::endl;
+            std::cout << depthExp << " UNUSABLE" << std::endl;
         } else if (node->occupied) {
-            std::cout << depthExp+" OCCUPIED" << std::endl;
+            std::cout << depthExp << " OCCUPIED" << std::endl;
         } else {
-            std::cout << depthExp+" FREE" << std::endl;
+            std::cout << depthExp << " FREE" << std::endl;
         }
         
 
