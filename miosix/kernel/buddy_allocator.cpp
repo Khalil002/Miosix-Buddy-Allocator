@@ -70,7 +70,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
     }
 
     unsigned int *ptr;
-    if(blockExp == maxBlockExp && root->occupied == false){
+    if(blockExp == maxBlockExp && root->occupied == false && root->left == nullptr && root->right == nullptr) {
         root->occupied = true; // Mark the root as occupied
         ptr = alignedBase; // If the maximum block size is requested and the root is not occupied, return the aligned base address
     }
