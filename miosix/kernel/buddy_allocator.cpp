@@ -1,7 +1,7 @@
 #include "buddy_allocator.h"
 #include <stdexcept>
 #include <iostream>
-
+#define INVALID_UINT 0xFFFFFFFF
 using namespace std;
 
 Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
@@ -200,8 +200,8 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int new_size){
 
 unsigned int Buddy::get_exp_of_block(Node *node, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr) {
 
-    if (node == nullptr || node->unusable) return NULL;
-    if (depthExp == minBlockExp - 1) return NULL; // Reached the minimum block size without finding the block
+    if (node == nullptr || node->unusable) return INVALID_UINT;
+    if (depthExp == minBlockExp - 1) return INVALID_UINT; // Reached the minimum block size without finding the block
 
     if (node->occupied && memLocation == ptr) {
         return depthExp;
