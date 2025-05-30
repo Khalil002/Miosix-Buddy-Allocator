@@ -146,6 +146,7 @@ void Buddy::deallocate(unsigned int *ptr){
 
     // Deallocate recursively
     deallocateRecursive(root, maxBlockExp, alignedBase, ptr);
+    printf("Deallocated memory at address: %p\n", ptr);
 }
 
 void Buddy::deallocateRecursive(Node *node, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr){
@@ -178,10 +179,10 @@ void Buddy::backPropagateDeallocate(Node *node) {
     if(!node->occupied && !node->unusable &&
         node->left == nullptr && node->right == nullptr) {
         Node* parentPtr = node->parent;
-        if(node->parent->left == node) {
-            node->parent->left = nullptr; // Remove the left child
+        if(parentPtr->left == node) {
+            parentPtr->left = nullptr; // Remove the left child
         } else {
-            node->parent->right = nullptr; // Remove the right child
+            parentPtr->right = nullptr; // Remove the right child
         }
         delete node; // Deallocate the current node
         backPropagateDeallocate(parentPtr); // Backpropagate to parent
