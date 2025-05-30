@@ -139,6 +139,7 @@ void ProcessPool::deallocate(unsigned int *ptr)
     #endif //BMA
 }
 
+#ifdef BMA
 unsigned int *ProcessPool::reallocate(unsigned int *ptr, unsigned int newSize){
     try {
         #ifndef TEST_ALLOC
@@ -151,6 +152,7 @@ unsigned int *ProcessPool::reallocate(unsigned int *ptr, unsigned int newSize){
         throw; // Rethrow the exception to indicate reallocation failure
     }
 }
+#endif //BMA
 
 ProcessPool::ProcessPool(unsigned int *poolBase, unsigned int poolSize)
     : poolBase(poolBase), poolSize(poolSize)
