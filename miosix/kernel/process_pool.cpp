@@ -150,7 +150,7 @@ unsigned int *ProcessPool::reallocate(unsigned int *ptr, unsigned int newSize){
         miosix::Lock<miosix::FastMutex> l(mutex);
         #endif //TEST_ALLOC
 
-        buddy->reallocate(ptr, newSize);
+        return buddy->reallocate(ptr, newSize);
     } catch (const std::exception& e) {
         cerr << "Error in ProcessPool::reallocate: " << e.what() << endl;
         throw; // Rethrow the exception to indicate reallocation failure
