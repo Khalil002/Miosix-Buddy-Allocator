@@ -139,7 +139,7 @@ private:
     ///Lists all allocated blocks, allows to retrieve their sizes
     std::map<unsigned int*,unsigned int> allocatedBlocks;
     #else //BMA
-    Buddy buddy; ///< Buddy allocator
+    Buddy *buddy; ///< Buddy allocator
     #endif //BMA
 
     unsigned int *poolBase; ///< Base address of the entire pool

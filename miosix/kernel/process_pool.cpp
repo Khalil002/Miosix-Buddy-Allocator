@@ -69,6 +69,8 @@ pair<unsigned int *, unsigned int> ProcessPool::allocate(unsigned int size)
     miosix::Lock<miosix::FastMutex> l(mutex);
     size=MPUConfiguration::roundSizeForMPU(max(size,blockSize));
     #else //TEST_ALLOC
+
+    #ifndef BMA
     //Size adjustment not supported during test_alloc due to missing mpu header
     if((size & (size - 1)) || size<blockSize)
             throw runtime_error("ProcessPool::allocate unsupported size");
@@ -76,7 +78,7 @@ pair<unsigned int *, unsigned int> ProcessPool::allocate(unsigned int size)
 
     if(size>poolSize) throw bad_alloc();
     
-    #ifndef BMA
+    
     unsigned int offset=0;
     if(reinterpret_cast<unsigned int>(poolBase) % size)
         offset=size-(reinterpret_cast<unsigned int>(poolBase) % size);

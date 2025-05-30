@@ -189,7 +189,8 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int new_size){
     deallocate(ptr);
 
     // Allocate a new block with the requested size
-    unsigned int *new_ptr = allocate(new_size);
+    std::pair<unsigned int*, unsigned int> result = allocate(new_size);
+    unsigned int *new_ptr = result.first;
 
     if (new_ptr == nullptr) {
         new_ptr = allocateSpecific(root, blockExp, maxBlockExp, alignedBase, ptr);
