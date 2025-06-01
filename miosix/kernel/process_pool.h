@@ -80,6 +80,12 @@ public:
     void deallocate(unsigned int *ptr);
 
     #ifdef BMA
+    /**
+     * Reallocate a memory block from the given pointer to a new block with the given size.
+     * \param ptr pointer to the block to reallocate.
+     * \param newSize new size in bytes for the block.
+     * \return a pointer to the new block, which may be the same as ptr if the size is unchanged.
+     */
     unsigned int *reallocate(unsigned int *ptr, unsigned int newSize);
     #endif //BMA
 

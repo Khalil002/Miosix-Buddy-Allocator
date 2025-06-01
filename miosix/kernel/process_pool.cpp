@@ -220,6 +220,7 @@ void ProcessPool::printAllocatedBlocks()
 
 #ifdef TEST_ALLOC
 //g++ -m32 -o pp -DTEST_ALLOC -DWITH_PROCESSES process_pool.cpp && ./pp
+//g++ -m32 -o pp -DTEST_ALLOC -DWITH_PROCESSES -DBMA process_pool.cpp buddy_allocator.cpp && ./pp
 int main()
 {
     using namespace miosix;
