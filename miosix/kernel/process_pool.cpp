@@ -232,6 +232,7 @@ int main()
 {
     using namespace miosix;
     ProcessPool& pool=ProcessPool::instance();
+    pool.printAllocatedBlocks();
     while(1)
     {
         #ifndef BMA
