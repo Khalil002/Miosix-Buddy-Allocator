@@ -147,7 +147,6 @@ void Buddy::deallocate(unsigned int *ptr){
     if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
         throw invalid_argument("Pointer is out of bounds of the memory pool.");
     }
-    printf("Deallocating pointer: %p\n", ptr);
     // Deallocate recursively
     deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
 }
@@ -158,7 +157,6 @@ void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned in
 
     // Success case: if the node is occupied, we have found the target block
     if (node->occupied) {
-        printf("Deallocating block at node: %p\n", node);
         node->occupied = false;
         backPropagateDeallocate(node);
         return;
@@ -171,7 +169,6 @@ void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned in
     if(leftMemPtr <= targetPtr && rightMemPtr > targetPtr) {
         deallocateRecursive(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
-        printf("Going right from memPtr: %p to rightMemPtr: %p\n", memPtr, rightMemPtr);
         deallocateRecursive(node->right, targetPtr, depthExp - 1, rightMemPtr);
     }
 }
