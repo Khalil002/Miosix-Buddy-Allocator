@@ -136,9 +136,8 @@ void ProcessPool::deallocate(unsigned int *ptr)
     #else //BMA
     try {
         buddy->deallocate(ptr);
-    } catch (const std::runtime_error& e) {
-        cerr << "Error in ProcessPool::deallocate: " << e.what() << endl;
-        throw; // Rethrow the exception to indicate deallocation failure
+    } catch (const invalid_argument& e) {
+        throw runtime_error(string("deallocate() error in ProcessPool: ") + e.what());
     }
     #endif //BMA
 }
@@ -263,6 +262,7 @@ int main()
                 try {
                     pool.deallocate(reinterpret_cast<unsigned int*>(param));
                 } catch(exception& e) {
+                    cerr << "ERROR: " << e.what() << endl;
                     cout<<typeid(e).name();
                 }
                 pool.printAllocatedBlocks();

@@ -1,6 +1,8 @@
 #include "buddy_allocator.h"
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
+
 #define INVALID_UINT 0xFFFFFFFF
 
 using namespace std;
@@ -199,7 +201,11 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     // Check if the pointer is within the bounds of the memory pool
     unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
     if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
-        throw invalid_argument("Pointer is out of bounds of the memory pool.");
+        std::ostringstream oss;
+        oss << "Invalid pointer deallocation attempt: " << ptr 
+            << " is out of bounds. Allowed range: ["
+            << alignedBase << ", " << (alignedBase + alignedSize) << ")";
+        throw std::invalid_argument(oss.str());
     }
 
     // Obtain the block
