@@ -234,6 +234,7 @@ std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int
 
     // Success case: if the node is occupied, we have found the target block
     if (node->occupied) {
+        printf("Found occupied block of target pointer %p at depth %u in node %p\n", targetPtr, depthExp, memPtr);
         return make_pair(depthExp, node);
     }
 
@@ -243,6 +244,7 @@ std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
     std::pair<unsigned int, Node *>result;
     if(leftMemPtr <= targetPtr && rightMemPtr > targetPtr) {
+        printf("moving from %p to left child in %p \n", memPtr, leftMemPtr);
         result = get_block(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
         result = get_block(node->right, targetPtr, depthExp - 1, leftMemPtr);
