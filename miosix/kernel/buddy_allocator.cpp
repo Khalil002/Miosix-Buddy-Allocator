@@ -95,10 +95,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
     unsigned int blockExp = ceiling_log2(size);
     unsigned int blockSize = 1 << blockExp;
     unsigned int *ptr = allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
-    if(!ptr) {
-        throw bad_alloc(); // If allocation failed, throw an exception
-    }
-
+    
     return make_pair(ptr, blockSize); // Return the pointer to the allocated memory and its size
 }
 
@@ -147,11 +144,7 @@ void Buddy::deallocate(unsigned int *ptr){
     // Check if the pointer is within the bounds of the memory pool
     unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
     if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
-        std::ostringstream oss;
-        oss << "Invalid reallocation attempt: " << ptr 
-            << " is out of bounds. Allowed range: ["
-            << alignedBase << ", " << (reinterpret_cast<unsigned int*>(alignedBaseValue + alignedSize)) << "]";
-        throw std::invalid_argument(oss.str());
+        throw invalid_argument("Pointer is out of bounds of the memory pool.");
     }
     // Deallocate recursively
     deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
@@ -205,11 +198,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     // Check if the pointer is within the bounds of the memory pool
     unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
     if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
-        std::ostringstream oss;
-        oss << "Invalid reallocation attempt: " << ptr 
-            << " is out of bounds. Allowed range: ["
-            << alignedBase << ", " << (reinterpret_cast<unsigned int*>(alignedBaseValue + alignedSize)) << "]";
-        throw std::invalid_argument(oss.str());
+        throw invalid_argument("Pointer is out of bounds of the memory pool.");
     }
 
     // Obtain the block

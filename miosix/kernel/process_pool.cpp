@@ -105,11 +105,17 @@ pair<unsigned int *, unsigned int> ProcessPool::allocate(unsigned int size)
     }
     throw bad_alloc();
     #else //BMA
+    
     try {
-        return buddy->allocate(size);
+        pair<unsigned int *, unsigned int> result = buddy->allocate(size);
+        if(!result.first) {
+            throw bad_alloc();
+        }
+        return result;
+    } catch (const std::invalid_argument& e) {
+        throw runtime_error(string("Error in ProcessPool::allocate: ") + e.what());
     } catch (const std::bad_alloc& e) {
-        cerr << "Error in ProcessPool::allocate: " << e.what() << endl;
-        throw; // Rethrow the exception to indicate allocation failure
+        throw runtime_error(string("Allocation failed in ProcessPool::allocate: ") + e.what());
     }
     #endif //BMA
 }
@@ -137,7 +143,7 @@ void ProcessPool::deallocate(unsigned int *ptr)
     try {
         buddy->deallocate(ptr);
     } catch (const invalid_argument& e) {
-        throw runtime_error(string("deallocate() error in ProcessPool: ") + e.what());
+        throw runtime_error(string("Error in ProcessPool::deallocate: ") + e.what());
     }
     #endif //BMA
 }
@@ -150,9 +156,8 @@ unsigned int *ProcessPool::reallocate(unsigned int *ptr, unsigned int newSize){
         #endif //TEST_ALLOC
 
         return buddy->reallocate(ptr, newSize);
-    } catch (const std::exception& e) {
-        cerr << "Error in ProcessPool::reallocate: " << e.what() << endl;
-        throw; // Rethrow the exception to indicate reallocation failure
+    } catch (const std::invalid_argument& e) {
+        throw runtime_error(string("Error in ProcessPool::reallocate: ") + e.what());
     }
 }
 #endif //BMA
@@ -167,16 +172,8 @@ ProcessPool::ProcessPool(unsigned int *poolBase, unsigned int poolSize)
     #else //BMA
     try {
         buddy = new Buddy(poolBase, poolSize);
-        #ifdef TEST_ALLOC
-        printf("memory pool initialized with base address: %p, size: %u bytes\n", buddy->memBase, buddy->memSize);
-        printf("offset: %u bytes\n", buddy->offset);
-        printf("Aligned base address: %p, Aligned size: %u bytes\n", buddy->alignedBase, buddy->alignedSize);
-        printf("Minimum block size: 2^%u= %u bytes \n", buddy->minBlockExp, buddy->minBlockSize);
-        printf("Maximum block size: 2^%u= %u bytes \n", buddy->maxBlockExp, buddy->maxBlockSize);
-        #endif
-    } catch (const std::exception& e) {
-        cerr << "Error in ProcessPool constructor: " << e.what() << endl;
-        throw;
+    } catch (const std::invalid_argument& e) {
+        throw runtime_error(string("Error in ProcessPool::ProcessPool: ") + e.what());
     }
     #endif //BMA
 }
@@ -231,6 +228,11 @@ int main()
 {
     using namespace miosix;
     ProcessPool& pool=ProcessPool::instance();
+    printf("memory pool initialized with base address: %p, size: %u bytes\n", pool->buddy->memBase, pool->buddy->memSize);
+    printf("offset: %u bytes\n", pool->buddy->offset);
+    printf("Aligned base address: %p, Aligned size: %u bytes\n", pool->buddy->alignedBase, pool->buddy->alignedSize);
+    printf("Minimum block size: 2^%u= %u bytes \n", pool->buddy->minBlockExp, pool->buddy->minBlockSize);
+    printf("Maximum block size: 2^%u= %u bytes \n", pool->buddy->maxBlockExp, pool->buddy->maxBlockSize);
     pool.printAllocatedBlocks();
     while(1)
     {
