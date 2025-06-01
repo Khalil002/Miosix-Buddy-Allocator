@@ -211,8 +211,10 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     printBT("", root, false, maxBlockExp, alignedBase);
     //manually deallocate the block
     node->occupied = false;
-    backPropagateDeallocate(node);
     printf("Buddy tree after deallocation:\n");
+    printBT("", root, false, maxBlockExp, alignedBase);
+    backPropagateDeallocate(node);
+    printf("Buddy tree after deletion:\n");
     printBT("", root, false, maxBlockExp, alignedBase);
     // Allocate a new block with the requested size
     std::pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
