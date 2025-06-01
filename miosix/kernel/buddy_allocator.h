@@ -41,6 +41,16 @@ public:
      * \brief Print the buddy allocator (for debugging).
      */
     void printBuddy();
+
+    unsigned int *memBase;
+    unsigned int memSize;
+    unsigned int minBlockExp;
+    unsigned int maxBlockExp;
+    unsigned int minBlockSize;
+    unsigned int maxBlockSize;
+    unsigned int offset;
+    unsigned int *alignedBase;
+    unsigned int alignedSize;
 private:
 
     class Node 
@@ -65,13 +75,4 @@ private:
     void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
 
     Node* root;
-    unsigned int *memBase;
-    unsigned int memSize;
-    unsigned int minBlockExp;
-    unsigned int maxBlockExp;
-    unsigned int minBlockSize;
-    unsigned int maxBlockSize;
-    unsigned int offset;
-    unsigned int *alignedBase;
-    unsigned int alignedSize;
 };
