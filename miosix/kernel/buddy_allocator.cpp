@@ -220,7 +220,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
 
     // If allocation failed, allocate the deallocated block
     if (!newBlockPtr) {
-        newBlockPtr = allocateSpecific(root, blockExp, maxBlockExp, alignedBase, ptr);
+        newBlockPtr = allocateSpecific(root, blockExp, ptr, maxBlockExp, alignedBase);
     }
 
     return newBlockPtr;
