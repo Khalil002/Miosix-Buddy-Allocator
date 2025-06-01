@@ -168,7 +168,7 @@ void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned in
     unsigned int memPtrValue = reinterpret_cast<unsigned int>(memPtr);
     unsigned int* leftMemPtr = memPtr;
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
-    if(leftMemPtr == targetPtr){
+    if(leftMemPtr >= targetPtr && rightMemPtr < targetPtr) {
         deallocateRecursive(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
         printf("Going right from memPtr: %p to rightMemPtr: %p\n", memPtr, rightMemPtr);
@@ -242,7 +242,7 @@ std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int
     unsigned int* leftMemPtr = memPtr;
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
     std::pair<unsigned int, Node *>result;
-    if(leftMemPtr == targetPtr){
+    if(leftMemPtr >= targetPtr && rightMemPtr < targetPtr) {
         result = get_block(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
         result = get_block(node->right, targetPtr, depthExp - 1, leftMemPtr);
@@ -267,7 +267,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int* leftMemPtr = memPtr;
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
     
-    if(leftMemPtr == targetPtr){
+    if(leftMemPtr >= targetPtr && rightMemPtr < targetPtr) {
         if (!node->left){
             node->left = new Node();
             node->left->parent = node;
