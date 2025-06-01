@@ -95,7 +95,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
     unsigned int blockExp = ceiling_log2(size);
     unsigned int blockSize = 1 << blockExp;
     unsigned int *ptr = allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
-    
+
     return make_pair(ptr, blockSize); // Return the pointer to the allocated memory and its size
 }
 
@@ -135,17 +135,17 @@ void Buddy::deallocate(unsigned int *ptr){
     // No action if the pointer is null
     if (!ptr) return;
 
-    // Calculate the offset from the aligned base address
-    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
-    if (ptrValue % minBlockSize != 0) {
-        throw invalid_argument("Pointer is not aligned to the minimum block size.");
-    }
-
     // Check if the pointer is within the bounds of the memory pool
+    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
     unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
     if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
         throw invalid_argument("Pointer is out of bounds of the memory pool.");
     }
+    // Calculate the offset from the aligned base address
+    if (ptrValue % minBlockSize != 0) {
+        throw invalid_argument("Pointer is not aligned to the minimum block size.");
+    }
+
     // Deallocate recursively
     deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
 }
@@ -189,16 +189,15 @@ void Buddy::backPropagateDeallocate(Node *node) {
 unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     if (!ptr) throw invalid_argument("Pointer is null.");
 
-    // Calculate the offset from the aligned base address
-    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
-    if (ptrValue % minBlockSize != 0) {
-        throw invalid_argument("Pointer is not aligned to the minimum block size.");
-    }
-
     // Check if the pointer is within the bounds of the memory pool
+    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
     unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
     if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
         throw invalid_argument("Pointer is out of bounds of the memory pool.");
+    }
+    // Calculate the offset from the aligned base address
+    if (ptrValue % minBlockSize != 0) {
+        throw invalid_argument("Pointer is not aligned to the minimum block size.");
     }
 
     // Obtain the block
@@ -208,16 +207,19 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     if (!node) {
         throw invalid_argument("Pointer does not belong to a block in the buddy tree.");
     }
+    printf("Reallocating block of size 2^%u bytes at %p to size %u bytes\n", blockExp, ptr, newSize);
+    printBT("", root, false, maxBlockExp, alignedBase);
     //manually deallocate the block
     node->occupied = false;
     backPropagateDeallocate(node);
-
+    printf("Buddy tree after deallocation:\n");
+    printBT("", root, false, maxBlockExp, alignedBase);
     // Allocate a new block with the requested size
     std::pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
     unsigned int *newBlockPtr = newBlock.first;
-
     // If allocation failed, allocate the deallocated block
     if (!newBlockPtr) {
+        printf("Allocation failed, trying to allocate the deallocated block of size 2^%u bytes at %p\n", blockExp, ptr);
         newBlockPtr = allocateSpecific(root, blockExp, ptr, maxBlockExp, alignedBase);
     }
 
