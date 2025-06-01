@@ -19,8 +19,8 @@ using namespace std;
   */
 Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
 {
-    memBase = memBase; // Base address of the memory pool
-    memSize = memSize; // Size of the memory pool in bytes
+    this->memBase = memBase; // Base address of the memory pool
+    this->memSize = memSize; // Size of the memory pool in bytes
     minBlockExp = 10; // Minimum block exp (1 << 10 = 1024 bytes = 1 KB)
     minBlockSize = 1 << minBlockExp; // 2^minBlockExp bytes
 
