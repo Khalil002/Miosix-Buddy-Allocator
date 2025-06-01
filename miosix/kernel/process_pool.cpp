@@ -263,7 +263,6 @@ int main()
                     pool.deallocate(reinterpret_cast<unsigned int*>(param));
                 } catch(exception& e) {
                     cerr << "ERROR: " << e.what() << endl;
-                    cout<<typeid(e).name();
                 }
                 pool.printAllocatedBlocks();
                 break;
