@@ -1,6 +1,6 @@
 #include "buddy_allocator.h"
 #include <stdexcept>
-
+#include <iostream>
 #define INVALID_UINT 0xFFFFFFFF
 
 using namespace std;
