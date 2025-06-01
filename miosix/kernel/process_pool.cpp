@@ -257,7 +257,7 @@ int main()
                 try {
                     pool.allocate(1<<param);
                 } catch(exception& e) {
-                    cout<<typeid(e).name();
+                    cerr << "ERROR: " << e.what() << endl;
                 }
                 pool.printAllocatedBlocks();
                 break;
@@ -278,7 +278,7 @@ int main()
                 try {
                     pool.reallocate(reinterpret_cast<unsigned int*>(ptr), 1<<newSize);
                 } catch(exception& e) {
-                    cout<<typeid(e).name();
+                    cerr << "ERROR: " << e.what() << endl;
                 }
                 pool.printAllocatedBlocks();
                 break;
