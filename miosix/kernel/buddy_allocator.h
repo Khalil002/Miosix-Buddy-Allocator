@@ -33,7 +33,7 @@ public:
      * \brief Reallocate a memory block into a block of the given size (data is not copied).
      * \param ptr Pointer to the memory block.
      * \param new_size The new size of the memory block in bytes.
-     * \return Pointer to the reallocated memory block, or nullptr if reallocation fails.
+     * \return Pointer to the reallocated memory block, in case of failure it returns the original pointer.
      */
     unsigned int *reallocate(unsigned int *ptr, unsigned int new_size);
 
@@ -56,12 +56,12 @@ private:
 
     unsigned int ceiling_log2(unsigned int x);
     void destroyTree(Node* node);
-    void allocateVirtualBlocks(Node *node, unsigned int blockExp, unsigned int depthExp);
-    unsigned int *allocateRecursive(Node *node, unsigned int blockExp, unsigned int depth, unsigned int *memLocation);
-    void deallocateRecursive(Node *node, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr);
+    void allocateUnusableBlock(Node *node, unsigned int blockExp, unsigned int depthExp);
+    unsigned int *allocateRecursive(Node *node, unsigned int blockExp, unsigned int depth, unsigned int *memPtr);
+    void deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
     void backPropagateDeallocate(Node *node);
-    unsigned int get_exp_of_block(Node *node, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr);
-    unsigned int *allocateSpecific(Node *node, unsigned int blockExp, unsigned int depthExp, unsigned int* memLocation, unsigned int *ptr);
+    std::pair<unsigned int, Node*> get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
+    unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr);
     void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
 
     Node* root;

@@ -168,6 +168,13 @@ ProcessPool::ProcessPool(unsigned int *poolBase, unsigned int poolSize)
     #else //BMA
     try {
         buddy = new Buddy(poolBase, poolSize);
+        #ifdef TEST_ALLOC
+        printf("memory pool initialized with base address: %p, size: %u bytes\n", buddy->memBase, buddy->memSize);
+        printf("offset: %u bytes\n", buddy->offset);
+        printf("Aligned base address: %p, Aligned size: %u bytes\n", buddy->alignedBase, buddy->alignedSize);
+        printf("Minimum block size: 2^%u= %u bytes \n", buddy->minBlockExp, buddy->minBlockSize);
+        printf("Maximum block size: 2^%u= %u bytes \n", buddy->maxBlockExp, buddy->maxBlockSize);
+        #endif
     } catch (const std::exception& e) {
         cerr << "Error in ProcessPool constructor: " << e.what() << endl;
         throw;
@@ -232,6 +239,7 @@ int main()
         #else //BMA
         cout<<"a<size(exponent)>|d<addr>|r<addr><size(exponent)>"<<endl;
         #endif //BMA
+
         unsigned int param;
         char op;
         string line;
