@@ -171,6 +171,7 @@ void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned in
     if(leftMemPtr == targetPtr){
         deallocateRecursive(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
+        printf("Going right from memPtr: %p to rightMemPtr: %p\n", memPtr, rightMemPtr);
         deallocateRecursive(node->right, targetPtr, depthExp - 1, rightMemPtr);
     }
 }
