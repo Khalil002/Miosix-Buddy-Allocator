@@ -247,6 +247,7 @@ std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int
         printf("moving from %p to left child in %p \n", memPtr, leftMemPtr);
         result = get_block(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
+        printf("moving from %p to right child in %p \n", memPtr, rightMemPtr);
         result = get_block(node->right, targetPtr, depthExp - 1, leftMemPtr);
     }
     return result;
