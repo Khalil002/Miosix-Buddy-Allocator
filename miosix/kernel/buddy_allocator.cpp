@@ -99,6 +99,15 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
     return make_pair(ptr, blockSize); // Return the pointer to the allocated memory and its size
 }
 
+/**
+ * \brief Recursively allocate a memory block in the buddy tree.
+ * This function traverses the buddy tree to find a suitable block for allocation.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param targetExp The exponent of the block size to allocate (2^targetExp).
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memPtr Pointer to the memory location that the current node manages.
+ * \return Pointer to the allocated memory, or nullptr if allocation fails.
+ */
 unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int *memPtr){
     if (node->occupied || node->unusable) return nullptr;
 
@@ -131,6 +140,12 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsig
     return allocateRecursive(node->right, targetExp, depthExp - 1, rightMemPtr);
 }
 
+/**
+ * \brief Deallocate a memory block.
+ * This function deallocates a memory block pointed to by the given pointer.
+ * \param ptr Pointer to the memory block to deallocate.
+ * \throws invalid_argument if the pointer is null, out of bounds, or not aligned.
+ */
 void Buddy::deallocate(unsigned int *ptr){
     // No action if the pointer is null
     if (!ptr) return;
@@ -150,6 +165,14 @@ void Buddy::deallocate(unsigned int *ptr){
     deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
 }
 
+/**
+ * \brief Recursively deallocate a memory block in the buddy tree.
+ * This function traverses the buddy tree to find the block that contains the target pointer and deallocates it.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param targetPtr Pointer to the target memory location to deallocate.
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memPtr Pointer to the memory location that the current node manages.
+ */
 void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr) {
     // Base case: if the node is null or unusable, return
     if (!node || node->unusable) return;
@@ -172,6 +195,11 @@ void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned in
     }
 }
 
+/**
+ * \brief Backpropagate deallocation to remove empty nodes.
+ * This function removes the current node if it has no children and backpropagates to its parent.
+ * \param node Pointer to the current node in the buddy tree.
+ */
 void Buddy::backPropagateDeallocate(Node *node) {
     if (node == root) return; // Stop if we reach the root
     if (node->left || node->right) return; // If the node has children, we cannot delete it
@@ -186,6 +214,13 @@ void Buddy::backPropagateDeallocate(Node *node) {
     backPropagateDeallocate(parent); // Backpropagate to parent
 }
 
+/**
+ * \brief Reallocate a memory block into a block of the given size (data is not copied).
+ * \param ptr Pointer to the memory block.
+ * \param newSize The new size of the memory block in bytes.
+ * \return Pointer to the reallocated memory block, in case of failure it returns the original pointer.
+ * \throws invalid_argument if the pointer is null or out of bounds or not aligned.
+ */
 unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     if (!ptr) throw invalid_argument("Pointer is null.");
 
@@ -205,7 +240,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     unsigned int blockExp = block.first;
     Node *node = block.second;
     if (!node) {
-        throw invalid_argument("Pointer does not belong to a block in the buddy tree.");
+        throw invalid_argument("Pointer does not belong to a usable block.");
     }
 
     //manually deallocate the block
@@ -215,7 +250,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     // Allocate a new block with the requested size
     std::pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
     unsigned int *newBlockPtr = newBlock.first;
-    
+
     // If allocation failed, allocate the deallocated block
     if (!newBlockPtr) {
         newBlockPtr = allocateSpecific(root, blockExp, ptr, maxBlockExp, alignedBase);
@@ -224,6 +259,14 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     return newBlockPtr;
 }
 
+/**
+ * \brief Get the block that manages the memory pointed by the target pointer.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param targetPtr Pointer to the target memory location.
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memPtr Pointer to the memory location that the current node manages.
+ * \return A pair containing the depth exponent and a pointer to the node containing the target block, or an invalid pair if not found.
+ */
 std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr) {
     // Base case: if the node is null or unusable, return an invalid pair
     if (!node || node->unusable) return make_pair(INVALID_UINT ,nullptr);
@@ -246,6 +289,16 @@ std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int
     return result;
 }
 
+/**
+ * \brief Allocate a specific block in the buddy tree.
+ * This function allocates a block of memory at a specific location in the buddy tree.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param targetExp The exponent of the block size to allocate (2^targetExp).
+ * \param targetPtr Pointer to the target memory location.
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memPtr Pointer to the memory location that the current node manages.
+ * \return Pointer to the allocated memory, or nullptr if allocation fails.
+ */
 unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr) {
     if (node->occupied || node->unusable) return nullptr;
 
@@ -307,6 +360,15 @@ void Buddy::destroyTree(Node* node)
     delete node;
 }
 
+/**
+ * Print the buddy tree in a human-readable format.
+ * This function prints the structure of the buddy tree, showing whether each block is free, occupied, or unusable.
+ * \param prefix The prefix string for formatting the output.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param isLeft Indicates whether the current node is a left child.
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memLocation Pointer to the memory location of the current node.
+ */
 void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation)
 {
     if( node != nullptr )
@@ -334,6 +396,10 @@ void Buddy::printBT(const std::string& prefix, const Node* node, bool isLeft, un
     }
 }
 
+/**
+ * Print the buddy allocator structure.
+ * This function prints the entire buddy tree starting from the root node.
+ */
 void Buddy::printBuddy()
 {
     printBT("", root, false, maxBlockExp, alignedBase);  
