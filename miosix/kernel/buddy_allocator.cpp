@@ -42,6 +42,14 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
     alignedBase = reinterpret_cast<unsigned int*>(alignedBaseValue);
     alignedSize = memBaseValue + memSize - alignedBaseValue; // Size of the aligned memory pool
 
+    /* Check if the aligned size is smaller than the minimum block size.
+     * This case yields an allocator with no usable blocks which even 
+     * though it is valid, it is not useful so it is better to notify the user.
+     */
+    if (alignedSize < minBlockSize) {
+        throw invalid_argument("(Memory size - alignment padding) is smaller than minimum block size.");
+    }
+
     maxBlockExp = ceiling_log2(alignedSize); // Maximum block exponent
     maxBlockSize = 1 << maxBlockExp; // 2^maxBlockExp bytes
     root = new Node();
