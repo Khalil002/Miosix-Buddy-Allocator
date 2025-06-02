@@ -40,7 +40,7 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
     }
     unsigned int alignedBaseValue = memBaseValue + offset;
     alignedBase = reinterpret_cast<unsigned int*>(alignedBaseValue);
-    alignedSize = memBaseValue + memSize - alignedBaseValue; // Size of the aligned memory pool
+    alignedSize = memSize - offset; // Size of the aligned memory pool
 
     /* Check if the aligned size is smaller than the minimum block size.
      * This case yields an allocator with no usable blocks which even 
