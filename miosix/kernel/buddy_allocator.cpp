@@ -144,6 +144,7 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsig
             node->left->parent = node;
             return leftMemPtr; // Allocate in the left child
         }else{
+            printf("Allocation failed at depth %u, targetExp %u\n", depthExp, targetExp);
             return nullptr; // If both children exist, allocation fails
         }
     }
