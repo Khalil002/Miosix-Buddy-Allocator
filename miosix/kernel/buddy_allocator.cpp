@@ -224,11 +224,21 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
     }
 
     if(!found) return; // If the target node was not found, do nothing
+    printf("Deallocating block at %p\n", ptr);
 
     // If the target node is the root, mark it as not occupied
     if(depthExp == maxBlockExp) {
         isRootOccupied = false;
         return;
+    }
+
+    //print the path
+    printf("Deallocation path:\n");
+    for(unsigned int i = 0; i < path.size(); i++) {
+        Node *currentNode = path[i];
+        unsigned int local_offset = 1 << (maxBlockExp - i - 1); // size of half the block
+        unsigned int memLocation = reinterpret_cast<unsigned int>(alignedBase) + (local_offset * (i + 1));
+        printf("Node %d: %p, depth: %d, memLocation: %p\n", i, currentNode, maxBlockExp - i, reinterpret_cast<unsigned int*>(memLocation));
     }
 
     // Delete pointer to the left or right child of the parent node of the path
