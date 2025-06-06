@@ -185,7 +185,8 @@ void Buddy::deallocate(unsigned int *ptr){
 
 
     // Deallocate recursively
-    deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
+    //deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
+    deallocateIterative(ptr); // Use iterative deallocation for better performance
 }
 
 void Buddy::deallocateIterative(unsigned int *ptr) {
