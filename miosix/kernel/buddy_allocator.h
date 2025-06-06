@@ -42,15 +42,6 @@ public:
      */
     void printBuddy();
 
-    unsigned int *memBase;
-    unsigned int memSize;
-    unsigned int minBlockExp;
-    unsigned int maxBlockExp;
-    unsigned int minBlockSize;
-    unsigned int maxBlockSize;
-    unsigned int offset;
-    unsigned int *alignedBase;
-    unsigned int alignedSize;
 private:
 
     class Node 
@@ -60,8 +51,7 @@ private:
         Node* right;
         Node* parent;
         bool unusable;
-        bool occupied;
-        Node() : parent(nullptr), left(nullptr), right(nullptr), unusable(false), occupied(false) {}
+        Node() : parent(nullptr), left(nullptr), right(nullptr), unusable(false) {}
     };
 
     unsigned int ceiling_log2(unsigned int x);
@@ -70,9 +60,20 @@ private:
     unsigned int *allocateRecursive(Node *node, unsigned int blockExp, unsigned int depth, unsigned int *memPtr);
     void deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
     void backPropagateDeallocate(Node *node);
-    std::pair<unsigned int, Node*> get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
+    std::pair<Node *, unsigned int> get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
     unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr);
     void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
 
+    unsigned int *memBase;
+    unsigned int memSize;
+    unsigned int minBlockExp;
+    unsigned int maxBlockExp;
+    unsigned int minBlockSize;
+    unsigned int maxBlockSize;
+    unsigned int offset;
+    unsigned int *alignedBase;
+    unsigned int alignedSize;
+    bool isRootOccupied; // Indicates if the root (the block that covers the whole memory pool) is occupied
+    bool isRootUnusable; // Indicates if the root (the block that covers the whole memory pool) is unusable
     Node* root;
 };

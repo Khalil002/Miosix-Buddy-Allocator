@@ -57,6 +57,7 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
     // If the aligned size is less than the maximum block size, allocate an unusable block
     // to make sure the tree does not cover memory locations outside the memory pool
     if(alignedSize < maxBlockSize) {
+        this->isRootUnusable = true;
         unsigned int unusableSize = maxBlockSize-alignedSize;
         unsigned int unusableExp = ceiling_log2(unusableSize);
         allocateUnusableBlock(root, unusableExp, maxBlockExp);
@@ -102,8 +103,18 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
 
     unsigned int blockExp = ceiling_log2(size);
     unsigned int blockSize = 1 << blockExp;
-    unsigned int *ptr = allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
 
+    // Root case
+    if(blockExp == maxBlockExp) {
+        if(isRootOccupied || isRootUnusable) return make_pair(nullptr, 0);
+        isRootOccupied = true; // Mark the root as occupied
+        return make_pair(alignedBase, blockSize); // Return the aligned base address
+    }
+
+    unsigned int *ptr = allocateRecursive(root, blockExp, maxBlockExp, alignedBase);
+    if (!ptr) {
+        return make_pair(nullptr, 0); // If allocation failed, return nullptr
+    }
     return make_pair(ptr, blockSize); // Return the pointer to the allocated memory and its size
 }
 
@@ -117,11 +128,10 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
 unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int *memPtr){
-    if (node->occupied || node->unusable) return nullptr;
+    if (node->unusable) return nullptr;
 
     if(depthExp == targetExp){
         if(!node->left && !node->right){
-            node->occupied = true;
             return memPtr;
         }else{
             return nullptr;
@@ -169,6 +179,7 @@ void Buddy::deallocate(unsigned int *ptr){
         throw invalid_argument("Pointer is not aligned to the minimum block size.");
     }
 
+
     // Deallocate recursively
     deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
 }
@@ -185,10 +196,14 @@ void Buddy::deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned in
     // Base case: if the node is null or unusable, return
     if (!node || node->unusable) return;
 
-    // Success case: if the node is occupied, we have found the target block
-    if (node->occupied) {
-        node->occupied = false;
-        backPropagateDeallocate(node);
+    // Success case: if the node has no children and pointer matches, deallocate it
+    if (!node->left && !node->right && memPtr == targetPtr) {
+        // If the node is the root, we only need to mark it as not occupied
+        if(depthExp == maxBlockExp) {
+            isRootOccupied = false;
+        }else{
+            backPropagateDeallocate(node);
+        }
         return;
     }
 
@@ -244,15 +259,14 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     }
 
     // Obtain the block
-    std::pair<unsigned int, Node *> block = get_block(root, ptr, maxBlockExp, alignedBase);
-    unsigned int blockExp = block.first;
-    Node *node = block.second;
+    std::pair<Node *, unsigned int> block = get_block(root, ptr, maxBlockExp, alignedBase);
+    Node *node = block.first;
+    unsigned int blockExp = block.second;
     if (!node) {
         throw invalid_argument("Pointer does not belong to a usable block.");
     }
 
     //manually deallocate the block
-    node->occupied = false;
     backPropagateDeallocate(node);
 
     // Allocate a new block with the requested size
@@ -275,20 +289,20 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
  * \param memPtr Pointer to the memory location that the current node manages.
  * \return A pair containing the depth exponent and a pointer to the node containing the target block, or an invalid pair if not found.
  */
-std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr) {
+std::pair<Buddy::Node *, unsigned int> Buddy::get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr) {
     // Base case: if the node is null or unusable, return an invalid pair
-    if (!node || node->unusable) return make_pair(INVALID_UINT ,nullptr);
+    if (!node || node->unusable) return make_pair(nullptr, INVALID_UINT);
 
     // Success case: if the node is occupied, we have found the target block
-    if (node->occupied) {
-        return make_pair(depthExp, node);
+    if (!node->left && !node->right && memPtr == targetPtr) {
+        return make_pair(node, depthExp);
     }
 
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
     unsigned int memPtrValue = reinterpret_cast<unsigned int>(memPtr);
     unsigned int* leftMemPtr = memPtr;
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
-    std::pair<unsigned int, Node *>result;
+    std::pair<Node *, unsigned int>result;
     if(leftMemPtr <= targetPtr && rightMemPtr > targetPtr) {
         result = get_block(node->left, targetPtr, depthExp - 1, leftMemPtr);
     }else{
@@ -308,11 +322,10 @@ std::pair<unsigned int, Buddy::Node *> Buddy::get_block(Node *node, unsigned int
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
 unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr) {
-    if (node->occupied || node->unusable) return nullptr;
+    if (node->unusable) return nullptr;
 
     if(depthExp == targetExp){
         if(!node->left && !node->right){
-            node->occupied = true;
             return memPtr;
         }else{
             return nullptr;
