@@ -188,6 +188,63 @@ void Buddy::deallocate(unsigned int *ptr){
     deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
 }
 
+void Buddy::deallocateIterative(unsigned int *ptr) {
+    //struct Frame { Node* node; bool isRight; unsigned int *memPtr; unsigned int depth; };
+    vector<Node *> path;
+    Node* node = root;
+    bool found = false;
+    unsigned int depthExp = maxBlockExp;
+    unsigned int targetMem = reinterpret_cast<unsigned int>(ptr);
+    unsigned int currentMem = reinterpret_cast<unsigned int>(alignedBase);
+    
+    while(true){
+        path.push_back(node); // Store the current node in the path
+
+        if(node->unusable) break;
+
+        if(!node->left && !node->right && currentMem == targetMem) {
+            found = true; // Found the target node
+            break;
+        }
+
+        unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
+        unsigned int leftMem = currentMem;
+        unsigned int rightMem = currentMem + local_offset;
+
+        if(leftMem <= targetMem && rightMem > targetMem) {
+            if(!node->left) break; 
+            if(node->right) path.erase(path.begin(), path.end() - 1);
+            node = node->left; // Move to the left child
+        } else {
+            if(!node->right) break;
+            if(node->left) path.erase(path.begin(), path.end() - 1);;
+            node = node->right; // Move to the right child
+        }
+    }
+
+    if(!found) return; // If the target node was not found, do nothing
+
+    // If the target node is the root, mark it as not occupied
+    if(depthExp == maxBlockExp) {
+        isRootOccupied = false;
+        return;
+    }
+
+    // Delete pointer to the left or right child of the parent node of the path
+    Node *firstNode = path[0];
+    Node *secondNode = path[1];
+    if(firstNode->left == secondNode) {
+        firstNode->left = nullptr; // Remove the left child
+    } else {
+        firstNode->right = nullptr; // Remove the right child
+    }
+    // Delete all nodes in the path from the second node to the end
+    for(unsigned int i = 1; i < path.size(); i++) {
+        Node *currentNode = path[i];
+        delete currentNode; 
+    }
+}
+
 /**
  * \brief Recursively deallocate a memory block in the buddy tree.
  * This function traverses the buddy tree to find the block that contains the target pointer and deallocates it.
