@@ -72,7 +72,6 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize)
  */
 void Buddy::allocateUnusableBlock(Node *node, unsigned int targetExp, unsigned int depthExp){
     if(depthExp == targetExp || depthExp == minBlockExp){
-        node->occupied = true; 
         node->unusable = true; 
         return;
     }
