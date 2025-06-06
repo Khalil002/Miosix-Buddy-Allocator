@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
-
+#include <vector>
 #define INVALID_UINT 0xFFFFFFFF
 
 using namespace std;
