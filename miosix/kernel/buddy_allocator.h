@@ -42,6 +42,15 @@ public:
      */
     void printBuddy();
 
+    unsigned int *memBase;
+    unsigned int memSize;
+    unsigned int minBlockExp;
+    unsigned int maxBlockExp;
+    unsigned int minBlockSize;
+    unsigned int maxBlockSize;
+    unsigned int offset;
+    unsigned int *alignedBase;
+    unsigned int alignedSize;
 private:
 
     class Node 
@@ -64,15 +73,7 @@ private:
     unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr);
     void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
 
-    unsigned int *memBase;
-    unsigned int memSize;
-    unsigned int minBlockExp;
-    unsigned int maxBlockExp;
-    unsigned int minBlockSize;
-    unsigned int maxBlockSize;
-    unsigned int offset;
-    unsigned int *alignedBase;
-    unsigned int alignedSize;
+    
     bool isRootOccupied; // Indicates if the root (the block that covers the whole memory pool) is occupied
     bool isRootUnusable; // Indicates if the root (the block that covers the whole memory pool) is unusable
     Node* root;
