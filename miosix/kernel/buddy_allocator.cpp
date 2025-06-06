@@ -201,7 +201,7 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
     while(true){
         path.push_back(node); // Store the current node in the path
 
-        if(node->unusable) break;
+        if(node->unusable || depthExp<minBlockExp) break;
 
         if(!node->left && !node->right && currentMem == targetMem) {
             found = true; // Found the target node
@@ -222,6 +222,7 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
             if(node->left) path.erase(path.begin(), path.end() - 1);;
             node = node->right; // Move to the right child
         }
+        depthExp--; // Decrease the depth exponent
     }
 
     printf("has left the loop, depthExp: %d, found: %d\n", depthExp, found);
