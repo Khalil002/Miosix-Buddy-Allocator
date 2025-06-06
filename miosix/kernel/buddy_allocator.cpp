@@ -129,16 +129,25 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
 unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int *memPtr){
     if (node->unusable) return nullptr;
 
-    if(depthExp == targetExp){
-        if(!node->left && !node->right){
-            return memPtr;
-        }else{
-            return nullptr;
-        }
-    } 
-
-    // Try allocating in left subtree
     unsigned int* leftMemPtr = memPtr;
+    unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
+    unsigned int memPtrValue = reinterpret_cast<unsigned int>(memPtr);
+    unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
+
+    if (depthExp == targetExp+1){
+        if (node->left){
+            node->right = new Node();
+            node->right->parent = node;
+            return rightMemPtr; // Allocate in the right child
+        }else if(node->right){
+            node->left = new Node();
+            node->left->parent = node;
+            return leftMemPtr; // Allocate in the left child
+        }else{
+            return nullptr; // If both children exist, allocation fails
+        }
+    }
+    
     if (!node->left){
         node->left = new Node();
         node->left->parent = node;
@@ -146,10 +155,6 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsig
     unsigned int* leftResult = allocateRecursive(node->left, targetExp, depthExp - 1, leftMemPtr);
     if (leftResult) return leftResult;
 
-    // If left allocation failed, try allocating in right subtree
-    unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
-    unsigned int memPtrValue = reinterpret_cast<unsigned int>(memPtr);
-    unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
     if (!node->right){
         node->right = new Node();
         node->right->parent = node;
@@ -323,18 +328,26 @@ std::pair<Buddy::Node *, unsigned int> Buddy::get_block(Node *node, unsigned int
 unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr) {
     if (node->unusable) return nullptr;
 
-    if(depthExp == targetExp){
-        if(!node->left && !node->right){
-            return memPtr;
-        }else{
-            return nullptr;
-        }
-    } 
-
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
     unsigned int memPtrValue = reinterpret_cast<unsigned int>(memPtr);
     unsigned int* leftMemPtr = memPtr;
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
+
+    if (depthExp == targetExp+1){
+        if (node->left){
+            node->right = new Node();
+            node->right->parent = node;
+            return rightMemPtr; // Allocate in the right child
+        }else if(node->right){
+            node->left = new Node();
+            node->left->parent = node;
+            return leftMemPtr; // Allocate in the left child
+        }else{
+            return nullptr; // If both children exist, allocation fails
+        }
+    }
+
+    
     
     if(leftMemPtr <= targetPtr && rightMemPtr > targetPtr) {
         if (!node->left){
