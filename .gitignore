@@ -23,3 +23,6 @@ miosix/_tools/bin2uf2/bin2uf2
 # Exclude Mac OS X temporary
 ._*
 .DS_Store
+
+# Exclude vscode workspace settings
+.vscode
