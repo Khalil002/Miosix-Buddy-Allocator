@@ -213,12 +213,10 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
         unsigned int rightMem = currentMem + local_offset;
 
         if(leftMem <= targetMem && rightMem > targetMem) {
-            printf("Moving from current node: %p to left child: %p, depthExp: %d\n", reinterpret_cast<unsigned int*>(currentMem), reinterpret_cast<unsigned int*>(leftMem), depthExp);
             if(node->right) path.erase(path.begin(), path.end() - 1);
             currentMem = leftMem; // Update current memory location
             node = node->left; // Move to the left child
         } else {
-            printf("Moving from current node: %p to right child: %p, depthExp: %d\n", reinterpret_cast<unsigned int*>(currentMem), reinterpret_cast<unsigned int*>(rightMem), depthExp);
             if(!node->right) break;
             if(node->left) path.erase(path.begin(), path.end() - 1);
             currentMem = rightMem; // Update current memory location
@@ -227,9 +225,7 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
         depthExp--; // Decrease the depth exponent
     }
 
-    printf("has left the loop, depthExp: %d, found: %d\n", depthExp, found);
     if(!found) return; // If the target node was not found, do nothing
-    printf("Deallocating block at %p\n", ptr);
 
     // If the target node is the root, mark it as not occupied
     if(depthExp == maxBlockExp) {
@@ -237,14 +233,6 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
         return;
     }
 
-    //print the path
-    printf("Deallocation path:\n");
-    for(unsigned int i = 0; i < path.size(); i++) {
-        Node *currentNode = path[i];
-        unsigned int local_offset = 1 << (maxBlockExp - i - 1); // size of half the block
-        unsigned int memLocation = reinterpret_cast<unsigned int>(alignedBase) + (local_offset * (i + 1));
-        printf("Node %d: %p, depth: %d, memLocation: %p\n", i, currentNode, maxBlockExp - i, reinterpret_cast<unsigned int*>(memLocation));
-    }
 
     // Delete pointer to the left or right child of the parent node of the path
     Node *firstNode = path[0];
