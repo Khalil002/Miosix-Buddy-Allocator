@@ -135,16 +135,15 @@ unsigned int *Buddy::allocateRecursive(Node *node, unsigned int targetExp, unsig
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
 
     if (depthExp == targetExp+1){
-        if (node->left){
-            node->right = new Node();
-            node->right->parent = node;
-            return rightMemPtr; // Allocate in the right child
-        }else if(node->right){
+        if (!node->left){
             node->left = new Node();
             node->left->parent = node;
             return leftMemPtr; // Allocate in the left child
+        }else if(!node->right){
+            node->right = new Node();
+            node->right->parent = node;
+            return rightMemPtr; // Allocate in the right child
         }else{
-            printf("Allocation failed at depth %u, targetExp %u\n", depthExp, targetExp);
             return nullptr; // If both children exist, allocation fails
         }
     }
@@ -335,14 +334,14 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int* rightMemPtr = reinterpret_cast<unsigned int*>(memPtrValue + local_offset);
 
     if (depthExp == targetExp+1){
-        if (node->left){
-            node->right = new Node();
-            node->right->parent = node;
-            return rightMemPtr; // Allocate in the right child
-        }else if(node->right){
+        if (!node->left){
             node->left = new Node();
             node->left->parent = node;
             return leftMemPtr; // Allocate in the left child
+        }else if(!node->right){
+            node->right = new Node();
+            node->right->parent = node;
+            return rightMemPtr; // Allocate in the right child
         }else{
             return nullptr; // If both children exist, allocation fails
         }
