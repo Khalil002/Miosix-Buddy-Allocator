@@ -223,6 +223,7 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
         }
     }
 
+    printf("has left the loop, depthExp: %d, found: %d\n", depthExp, found);
     if(!found) return; // If the target node was not found, do nothing
     printf("Deallocating block at %p\n", ptr);
 
