@@ -275,7 +275,11 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     }
 
     //manually deallocate the block
-    backPropagateDeallocate(node);
+    if(blockExp == maxBlockExp) {
+        isRootOccupied = false; // Mark the root as not occupied
+    }else{
+        backPropagateDeallocate(node);
+    }
 
     // Allocate a new block with the requested size
     std::pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
