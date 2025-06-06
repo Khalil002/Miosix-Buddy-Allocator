@@ -215,11 +215,13 @@ void Buddy::deallocateIterative(unsigned int *ptr) {
         if(leftMem <= targetMem && rightMem > targetMem) {
             printf("Moving from current node: %p to left child: %p, depthExp: %d\n", reinterpret_cast<unsigned int*>(currentMem), reinterpret_cast<unsigned int*>(leftMem), depthExp);
             if(node->right) path.erase(path.begin(), path.end() - 1);
+            currentMem = leftMem; // Update current memory location
             node = node->left; // Move to the left child
         } else {
             printf("Moving from current node: %p to right child: %p, depthExp: %d\n", reinterpret_cast<unsigned int*>(currentMem), reinterpret_cast<unsigned int*>(rightMem), depthExp);
             if(!node->right) break;
-            if(node->left) path.erase(path.begin(), path.end() - 1);;
+            if(node->left) path.erase(path.begin(), path.end() - 1);
+            currentMem = rightMem; // Update current memory location
             node = node->right; // Move to the right child
         }
         depthExp--; // Decrease the depth exponent
