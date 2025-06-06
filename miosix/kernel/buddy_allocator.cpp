@@ -249,6 +249,10 @@ void Buddy::backPropagateDeallocate(Node *node) {
  * \throws invalid_argument if the pointer is null or out of bounds or not aligned.
  */
 unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
+    if (newSize < minBlockSize || newSize > maxBlockSize) {
+        throw invalid_argument("Invalid allocation size.");
+    }
+
     if (!ptr) throw invalid_argument("Pointer is null.");
 
     // Check if the pointer is within the bounds of the memory pool
