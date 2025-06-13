@@ -1,5 +1,8 @@
 #pragma once
+#include <utility>
+#ifdef TEST_ALLOC
 #include <string>
+#endif //TEST_ALLOC
 
 class Buddy 
 {
@@ -9,7 +12,7 @@ public:
      * \param memBase address of the start of the memory pool.
      * \param memSize size of the memory pool.
      */
-    Buddy(unsigned int *memBase, unsigned int memSize);
+    Buddy(unsigned int *memBase, unsigned int memSize, unsigned int minBlockExp=10);
     
     /**
      * Destructor
@@ -37,11 +40,40 @@ public:
      */
     unsigned int *reallocate(unsigned int *ptr, unsigned int new_size);
 
+    #ifdef TEST_ALLOC
     /**
-     * \brief Print the buddy allocator (for debugging).
+     * \brief Print the metadata of the buddy allocator.
+     * This function prints the memory pool base address, size, aligned base address, aligned size,
+     * minimum and maximum block sizes.
+     */
+    void printMetadata() const;
+
+    /**
+     * \brief Print the buddy allocator tree.
      */
     void printBuddy();
+    #endif //TEST_ALLOC
 
+private:
+
+    class Node 
+    {
+    public:
+        Node* left;
+        Node* right;
+        bool unusable;
+        Node() : left(nullptr), right(nullptr), unusable(false) {}
+    };
+
+    unsigned int ceiling_log2(unsigned int x);
+    unsigned int *allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue);
+    unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue);
+    unsigned int deallocate(unsigned int ptr);
+    void destroyTree(Node* node);
+    #ifdef TEST_ALLOC
+    void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
+    #endif //TEST_ALLOC
+    
     unsigned int *memBase;
     unsigned int memSize;
     unsigned int minBlockExp;
@@ -51,29 +83,6 @@ public:
     unsigned int offset;
     unsigned int *alignedBase;
     unsigned int alignedSize;
-private:
-
-    class Node 
-    {
-    public:
-        Node* left;
-        Node* right;
-        Node* parent;
-        bool unusable;
-        Node() : parent(nullptr), left(nullptr), right(nullptr), unusable(false) {}
-    };
-
-    unsigned int ceiling_log2(unsigned int x);
-    void destroyTree(Node* node);
-    void allocateUnusableBlock(Node *node, unsigned int blockExp, unsigned int depthExp);
-    unsigned int *allocateRecursive(Node *node, unsigned int blockExp, unsigned int depth, unsigned int *memPtr);
-    void deallocateRecursive(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
-    void backPropagateDeallocate(Node *node);
-    std::pair<Node *, unsigned int> get_block(Node *node, unsigned int *targetPtr, unsigned int depthExp, unsigned int* memPtr);
-    unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int *targetPtr, unsigned int depthExp, unsigned int *memPtr);
-    void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
-    void deallocateIterative(unsigned int *ptr);
-    
     bool isRootOccupied; // Indicates if the root (the block that covers the whole memory pool) is occupied
     bool isRootUnusable; // Indicates if the root (the block that covers the whole memory pool) is unusable
     Node* root;

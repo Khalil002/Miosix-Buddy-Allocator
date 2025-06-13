@@ -173,11 +173,7 @@ ProcessPool::ProcessPool(unsigned int *poolBase, unsigned int poolSize)
     try {
         buddy = new Buddy(poolBase, poolSize);
         #ifdef TEST_ALLOC
-        printf("memory pool initialized with base address: %p, size: %u bytes\n", buddy->memBase, buddy->memSize);
-        printf("offset: %u bytes\n", buddy->offset);
-        printf("Aligned base address: %p, Aligned size: %u bytes\n", buddy->alignedBase, buddy->alignedSize);
-        printf("Minimum block size: 2^%u= %u bytes \n", buddy->minBlockExp, buddy->minBlockSize);
-        printf("Maximum block size: 2^%u= %u bytes \n", buddy->maxBlockExp, buddy->maxBlockSize);
+        buddy->printMetadata();
         #endif
     } catch (const std::invalid_argument& e) {
         throw runtime_error(string("Error in ProcessPool::ProcessPool: ") + e.what());
