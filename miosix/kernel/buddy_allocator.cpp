@@ -101,7 +101,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
         isRootOccupied = true; // Mark the root as occupied
         return make_pair(alignedBase, blockSize); // Return the aligned base address
     }
-    
+
     unsigned int *ptr = allocate(root, blockExp, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase));
     return make_pair(ptr, blockSize);
 }
@@ -221,7 +221,7 @@ unsigned int Buddy::deallocate(unsigned int ptrValue) {
         depthExp--; // Decrease the depth exponent
     }
 
-    if(!found) return depthExp; // If the target node was not found, do nothing
+    if(!found) return 0; // If the target node was not found, do nothing
 
     // If the target node is the root, mark it as not occupied 
     if(depthExp == maxBlockExp) {
@@ -267,7 +267,10 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
     
     // Deallocate the current block
     unsigned int oldBlockExp = deallocate(ptrValue);
-
+    if(oldBlockExp==0) {
+        throw invalid_argument("Pointer does not point to a valid block.");
+    }
+    
     // Allocate a new block with the requested size
     pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
     unsigned int *newBlockPtr = newBlock.first;
