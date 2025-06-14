@@ -93,7 +93,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
 
     // Root case
     if(blockExp == maxBlockExp) {
-        if(isRootOccupied || isRootUnusable) return make_pair(nullptr, blockSize);
+        if(isRootOccupied || isRootUnusable || root->left || root->right) return make_pair(nullptr, blockSize);
         isRootOccupied = true; // Mark the root as occupied
         return make_pair(alignedBase, blockSize); // Return the aligned base address
     }
