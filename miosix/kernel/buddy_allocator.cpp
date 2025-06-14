@@ -302,9 +302,11 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
 
     if(leftMemPtrValue <= targetPtrValue && rightMemPtrValue  > targetPtrValue) {
         if (!node->left) node->left = new Node();
+        printf("Going left to %p\n", reinterpret_cast<void*>(leftMemPtrValue));
         return allocateSpecific(node->left, targetExp, targetPtrValue, depthExp - 1, leftMemPtrValue);
     }else{
         if (!node->right) node->right = new Node();
+        printf("Going right to %p\n", reinterpret_cast<void*>(rightMemPtrValue));
         return allocateSpecific(node->right, targetExp, targetPtrValue, depthExp - 1, rightMemPtrValue);
     }
 }
