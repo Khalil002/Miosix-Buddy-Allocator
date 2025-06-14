@@ -378,9 +378,7 @@ void Buddy::printBT(const string& prefix, const Node* node, bool isLeft, unsigne
             if(isRootOccupied) {
                 cout << depthExp << " OCCUPIED " << memLocation << endl;
             }else{
-                if(!node-left && !node->right){
-                    cout << depthExp << "   " << memLocation << endl;
-                }
+                cout << depthExp << "   " << memLocation << endl;
             } 
         }else{
             if (node->unusable) {
