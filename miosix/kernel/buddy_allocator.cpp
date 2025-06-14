@@ -116,13 +116,13 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
  */
 unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode){
     if (node->unusable) return nullptr;
+    if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr; // If the parent of the target block has no children but is not a new node, this means the parent node is allocated
 
     unsigned int leftMemPtrValue = memPtrValue;
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
     unsigned int rightMemPtrValue = memPtrValue + local_offset;
-
+    
     if (depthExp == targetExp+1){
-        if(!newNode && !node->left && !node->right && depthExp!=maxBlockExp) return nullptr; // If the parent of the target block has no children but is not a new node, this means the parent node is allocated
         if (!node->left){
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
@@ -292,13 +292,13 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
  */
 unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode) {
     if (node->unusable) return nullptr;
+    if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr;
 
     unsigned int leftMemPtrValue = memPtrValue;
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
     unsigned int rightMemPtrValue  = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
-        if(!newNode && !node->left && !node->right && depthExp!=maxBlockExp) return nullptr; 
         if (!node->left && leftMemPtrValue == targetPtrValue) {
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
