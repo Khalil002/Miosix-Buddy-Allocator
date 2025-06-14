@@ -66,8 +66,8 @@ private:
     };
 
     unsigned int ceiling_log2(unsigned int x);
-    unsigned int *allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue);
-    unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue);
+    unsigned int *allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode=false);
+    unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode=false);
     unsigned int deallocate(unsigned int ptr);
     void destroyTree(Node* node);
     #ifdef TEST_ALLOC

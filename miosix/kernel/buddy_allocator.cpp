@@ -92,6 +92,8 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
     unsigned int blockExp = ceiling_log2(size);
     unsigned int blockSize = 1 << blockExp;
 
+    if(isRootOccupied) return make_pair(nullptr, blockSize);
+
     // Root case
     if(blockExp == maxBlockExp) {
         if(isRootOccupied || isRootUnusable || root->left || root->right) return make_pair(nullptr, blockSize);
@@ -112,7 +114,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
  * \param memPtrValue Value of the pointer to the memory location that the current node manages.
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
-unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue){
+unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode){
     if (node->unusable) return nullptr;
 
     unsigned int leftMemPtrValue = memPtrValue;
@@ -120,6 +122,7 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
     unsigned int rightMemPtrValue = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
+        if(!newNode && !node->left && !node->right) return nullptr; // If the parent of the target block has no children but is not a new node, this means the parent node is allocated
         if (!node->left){
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
@@ -131,12 +134,20 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
         }
     }
     
-    if (!node->left) node->left = new Node();
-    unsigned int* leftResult = allocate(node->left, targetExp, depthExp - 1, leftMemPtrValue);
+    bool newNode2 = newNode;
+    if (!node->left){
+        node->left = new Node();
+        newNode2 = true;
+    }
+    unsigned int* leftResult = allocate(node->left, targetExp, depthExp - 1, leftMemPtrValue, newNode2);
     if (leftResult) return leftResult;
 
-    if (!node->right) node->right = new Node();
-    return allocate(node->right, targetExp, depthExp - 1, rightMemPtrValue);
+    newNode2 = newNode; // Reset newNode2 for the right child
+    if (!node->right){
+        node->right = new Node();
+        newNode2 = true;
+    }
+    return allocate(node->right, targetExp, depthExp - 1, rightMemPtrValue, newNode2);
 }
 
 /**
@@ -279,7 +290,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
  * \param memPtrValue Value of the Pointer to the memory location that the current node manages.
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
-unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue) {
+unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode) {
     if (node->unusable) return nullptr;
 
     unsigned int leftMemPtrValue = memPtrValue;
@@ -287,6 +298,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int rightMemPtrValue  = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
+        if(!newNode && !node->left && !node->right) return nullptr; 
         if (!node->left && leftMemPtrValue == targetPtrValue) {
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
@@ -298,12 +310,19 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
         }
     }
 
+    bool newNode2 = newNode;
     if(leftMemPtrValue <= targetPtrValue && rightMemPtrValue  > targetPtrValue) {
-        if (!node->left) node->left = new Node();
-        return allocateSpecific(node->left, targetExp, targetPtrValue, depthExp - 1, leftMemPtrValue);
+        if (!node->left){
+            node->left = new Node();
+            newNode2 = true;
+        }
+        return allocateSpecific(node->left, targetExp, targetPtrValue, depthExp - 1, leftMemPtrValue, newNode2);
     }else{
-        if (!node->right) node->right = new Node();
-        return allocateSpecific(node->right, targetExp, targetPtrValue, depthExp - 1, rightMemPtrValue);
+        if (!node->right){
+            node->right = new Node();
+            newNode2 = true;
+        }
+        return allocateSpecific(node->right, targetExp, targetPtrValue, depthExp - 1, rightMemPtrValue, newNode2);
     }
 }
 
