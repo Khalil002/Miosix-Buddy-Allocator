@@ -3,6 +3,7 @@
 #ifdef TEST_ALLOC
 #include <iostream>
 #endif
+#include <cstdio>
 
 using namespace std;
 
@@ -290,6 +291,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
         }else if(!node->right && memPtrValue == rightMemPtrValue) {
             node->right = new Node();
+            printf("Allocating at %p\n", reinterpret_cast<void*>(rightMemPtrValue));
             return reinterpret_cast<unsigned int*>(rightMemPtrValue);
         }else{
             return nullptr; // If both children exist, allocation fails
