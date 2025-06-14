@@ -122,7 +122,7 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
     unsigned int rightMemPtrValue = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
-        if(!newNode && !node->left && !node->right) return nullptr; // If the parent of the target block has no children but is not a new node, this means the parent node is allocated
+        if(!newNode && !node->left && !node->right && depthExp!=maxBlockExp) return nullptr; // If the parent of the target block has no children but is not a new node, this means the parent node is allocated
         if (!node->left){
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
@@ -298,7 +298,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int rightMemPtrValue  = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
-        if(!newNode && !node->left && !node->right) return nullptr; 
+        if(!newNode && !node->left && !node->right && depthExp!=maxBlockExp) return nullptr; 
         if (!node->left && leftMemPtrValue == targetPtrValue) {
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
