@@ -287,11 +287,12 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int rightMemPtrValue  = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
-        if (!node->left && memPtrValue == leftMemPtrValue) {
+        printf("Allocating target %p\n", reinterpret_cast<void*>(memPtrValue));
+        if (!node->left && leftMemPtrValue == targetPtrValue) {
             node->left = new Node();
             printf("Allocating at %p\n", reinterpret_cast<void*>(leftMemPtrValue));
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
-        }else if(!node->right && memPtrValue == rightMemPtrValue) {
+        }else if(!node->right && rightMemPtrValue == targetPtrValue) {
             node->right = new Node();
             printf("Allocating at %p\n", reinterpret_cast<void*>(rightMemPtrValue));
             return reinterpret_cast<unsigned int*>(rightMemPtrValue);
