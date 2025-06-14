@@ -285,10 +285,10 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int rightMemPtrValue  = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
-        if (!node->left){
+        if (!node->left && memPtrValue == leftMemPtrValue) {
             node->left = new Node();
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
-        }else if(!node->right){
+        }else if(!node->right && memPtrValue == rightMemPtrValue) {
             node->right = new Node();
             return reinterpret_cast<unsigned int*>(rightMemPtrValue);
         }else{
