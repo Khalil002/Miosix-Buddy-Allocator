@@ -262,6 +262,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
 
     // If allocation failed, allocate the deallocated block
     if (!newBlockPtr) {
+        printf("Allocation failed, trying to allocate the deallocated block at %p\n", reinterpret_cast<void*>(ptrValue));
         newBlockPtr = allocateSpecific(root, oldBlockExp, ptrValue, maxBlockExp, alignedBaseValue);
     }
 
@@ -288,6 +289,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     if (depthExp == targetExp+1){
         if (!node->left && memPtrValue == leftMemPtrValue) {
             node->left = new Node();
+            printf("Allocating at %p\n", reinterpret_cast<void*>(leftMemPtrValue));
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
         }else if(!node->right && memPtrValue == rightMemPtrValue) {
             node->right = new Node();
