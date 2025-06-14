@@ -273,7 +273,6 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
 
     // If allocation failed, allocate the deallocated block
     if (!newBlockPtr) {
-        printf("Allocation failed, trying to allocate the deallocated block at %p\n", reinterpret_cast<void*>(ptrValue));
         newBlockPtr = allocateSpecific(root, oldBlockExp, ptrValue, maxBlockExp, alignedBaseValue);
     }
 
