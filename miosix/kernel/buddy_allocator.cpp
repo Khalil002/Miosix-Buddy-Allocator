@@ -65,6 +65,7 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize, unsigned int minBlockE
         Node *node = root;
         for(unsigned int i = 0; i < n; i++){
             node->right = new Node();
+            node = node->right; // Move to the right child
         }
         node->unusable = true;
     }
