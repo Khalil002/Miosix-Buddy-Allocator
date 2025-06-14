@@ -100,7 +100,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
         isRootOccupied = true; // Mark the root as occupied
         return make_pair(alignedBase, blockSize); // Return the aligned base address
     }
-
+    printf("Allocating block of size %u bytes (2^%u)\n", blockSize, blockExp);
     unsigned int *ptr = allocate(root, blockExp, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase));
     return make_pair(ptr, blockSize);
 }
