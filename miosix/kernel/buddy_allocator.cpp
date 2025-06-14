@@ -287,14 +287,11 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     unsigned int rightMemPtrValue  = memPtrValue + local_offset;
 
     if (depthExp == targetExp+1){
-        printf("Allocating target %p\n", reinterpret_cast<void*>(memPtrValue));
         if (!node->left && leftMemPtrValue == targetPtrValue) {
             node->left = new Node();
-            printf("Allocating at %p\n", reinterpret_cast<void*>(leftMemPtrValue));
             return reinterpret_cast<unsigned int*>(leftMemPtrValue);
         }else if(!node->right && rightMemPtrValue == targetPtrValue) {
             node->right = new Node();
-            printf("Allocating at %p\n", reinterpret_cast<void*>(rightMemPtrValue));
             return reinterpret_cast<unsigned int*>(rightMemPtrValue);
         }else{
             return nullptr; // If both children exist, allocation fails
@@ -303,11 +300,9 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
 
     if(leftMemPtrValue <= targetPtrValue && rightMemPtrValue  > targetPtrValue) {
         if (!node->left) node->left = new Node();
-        printf("Going left to %p\n", reinterpret_cast<void*>(leftMemPtrValue));
         return allocateSpecific(node->left, targetExp, targetPtrValue, depthExp - 1, leftMemPtrValue);
     }else{
         if (!node->right) node->right = new Node();
-        printf("Going right to %p\n", reinterpret_cast<void*>(rightMemPtrValue));
         return allocateSpecific(node->right, targetExp, targetPtrValue, depthExp - 1, rightMemPtrValue);
     }
 }
