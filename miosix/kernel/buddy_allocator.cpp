@@ -173,6 +173,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             || (!newNode && !node->left && !node->right && depth > targetExp + 1)) {
             continue;
         }
+        if (newNode) node = new Node(); // If this is a new node, create it
 
 
         unsigned int local_offset = 1 << (depth - 1);
@@ -195,14 +196,12 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
         }
         
         if (!node->right) {
-            node->right = new Node();
             s.push({node->right, depth - 1, rightPtr, true});
         } else {
             s.push({node->right, depth - 1, rightPtr, false});
         }
-        
+
         if (!node->left) {
-            node->left = new Node();
             s.push({node->left, depth - 1, leftPtr, true});
         } else {
             s.push({node->left, depth - 1, leftPtr, false});
