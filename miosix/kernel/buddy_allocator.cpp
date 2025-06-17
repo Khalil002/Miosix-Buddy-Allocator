@@ -157,7 +157,7 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
 unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
     
     stack<Frame> s;
-    s.push({root, root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false, true});
+    s.push({nullptr, root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false, true});
     unsigned int *result = nullptr;
 
     while (!s.empty()) {
@@ -180,7 +180,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             }
         }
         if (node->unusable 
-            || (!newNode && !node->left && !node->right && depth != maxBlockExp)) {
+            || (!newNode && !node->left && !node->right && prevNode)) {
             continue;
         }
 
@@ -407,7 +407,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
 unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtr) {
         
     stack<Frame> s;
-    s.push({root, root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false, true});
+    s.push({nullptr, root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false, true});
     unsigned int *result = nullptr;
 
     while (!s.empty()) {
@@ -420,7 +420,7 @@ unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned 
         bool newNode = f.newNode;
         bool isLeft = f.isLeft;
 
-        printf("Processing node at depth %u with pointer %x\n", depth, ptr);
+        printf("Processing s node at depth %u with pointer %x\n", depth, ptr);
         if(newNode) {
             node = new Node(); // Create a new node if it's a new node
             if(isLeft) {
@@ -430,7 +430,7 @@ unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned 
             }
         }
         if (node->unusable 
-            || (!newNode && !node->left && !node->right && depth != maxBlockExp)) {
+            || (!newNode && !node->left && !node->right && prevNode)) {
             continue;
         }
 
