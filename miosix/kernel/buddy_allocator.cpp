@@ -188,6 +188,13 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             }
         }
 
+        if (!f.node->right) {
+            f.node->right = new Node();
+            s.push({f.node->right, f.depth - 1, rightPtr, true});
+        } else {
+            s.push({f.node->right, f.depth - 1, rightPtr, false});
+        }
+        
         if (!f.node->left) {
             f.node->left = new Node();
             s.push({f.node->left, f.depth - 1, leftPtr, true});
@@ -195,12 +202,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             s.push({f.node->left, f.depth - 1, leftPtr, false});
         }
 
-         if (!f.node->right) {
-            f.node->right = new Node();
-            s.push({f.node->right, f.depth - 1, rightPtr, true});
-        } else {
-            s.push({f.node->right, f.depth - 1, rightPtr, false});
-        }
+        
     }
     
     return result; // If no suitable block was found, return nullptr
