@@ -367,6 +367,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
 unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode) {
+    
     if (node->unusable) return nullptr;
     if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr;
 
@@ -403,7 +404,7 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
 }
 
 unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtr) {
-    
+    /**
     stack<Frame> s;
     s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
     unsigned int *result = nullptr;
@@ -453,7 +454,8 @@ unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned 
         }
     }
     
-    return result; // If no suitable block was found, return nullptr
+    return result; // If no suitable block was found, return nullptr */
+    return nullptr;
 }
 /*
  * Calculate the ceiling of log base 2 of a number.
