@@ -64,10 +64,12 @@ private:
     };
 
     struct Frame {
+        Node* prevNode;
         Node* node;
         unsigned int depth;
         unsigned int ptr;
         bool newNode;
+        bool isLeft;
     };
 
     unsigned int ceiling_log2(unsigned int x);

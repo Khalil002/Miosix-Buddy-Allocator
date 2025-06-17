@@ -157,24 +157,32 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
 unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
     
     stack<Frame> s;
-    s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
+    s.push({root, root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false, true});
     unsigned int *result = nullptr;
 
     while (!s.empty()) {
         Frame& f = s.top();
         s.pop();
+        Node* prevNode = f.prevNode;
         Node* node = f.node;
         unsigned int depth = f.depth;
         unsigned int ptr = f.ptr;
         bool newNode = f.newNode;
+        bool isLeft = f.isLeft;
 
         printf("Processing node at depth %u with pointer %x\n", depth, ptr);
-        if (newNode) node = new Node(); // If this is a new node, create it
+        if(newNode) {
+            node = new Node(); // Create a new node if it's a new node
+            if(isLeft) {
+                prevNode->left = node; // Link the new node to the left child
+            } else {
+                prevNode->right = node; // Link the new node to the right child
+            }
+        }
         if (node->unusable 
             || (!newNode && !node->left && !node->right && depth > targetExp + 1)) {
             continue;
         }
-        
 
 
         unsigned int local_offset = 1 << (depth - 1);
@@ -197,19 +205,16 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
         }
         
         if (!node->right) {
-            s.push({node->right, depth - 1, rightPtr, true});
+            s.push({node, node->right, depth - 1, rightPtr, true, false});
         } else {
-            s.push({node->right, depth - 1, rightPtr, false});
+            s.push({node, node->right, depth - 1, rightPtr, false, false});
         }
 
         if (!node->left) {
-            s.push({node->left, depth - 1, leftPtr, true});
+            s.push({node, node->left, depth - 1, leftPtr, true, true});
         } else {
-            s.push({node->left, depth - 1, leftPtr, false});
+            s.push({node, node->left, depth - 1, leftPtr, false, true});
         }
-
-        
-        
     }
     
     return result; // If no suitable block was found, return nullptr
