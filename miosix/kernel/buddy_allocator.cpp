@@ -169,11 +169,12 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
         bool newNode = f.newNode;
 
         printf("Processing node at depth %u with pointer %x\n", depth, ptr);
+        if (newNode) node = new Node(); // If this is a new node, create it
         if (node->unusable 
             || (!newNode && !node->left && !node->right && depth > targetExp + 1)) {
             continue;
         }
-        if (newNode) node = new Node(); // If this is a new node, create it
+        
 
 
         unsigned int local_offset = 1 << (depth - 1);
