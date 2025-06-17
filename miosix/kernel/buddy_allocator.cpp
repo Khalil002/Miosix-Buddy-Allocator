@@ -455,17 +455,18 @@ unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned 
         }
         
         if(leftPtr <= targetPtr && rightPtr  > targetPtr) {
-            if (!node->right) {
-                s.push({node, node->right, depth - 1, rightPtr, true, false});
-            } else {
-                s.push({node, node->right, depth - 1, rightPtr, false, false});
-            }
-        }else{
             if (!node->left) {
                 s.push({node, node->left, depth - 1, leftPtr, true, true});
             } else {
                 s.push({node, node->left, depth - 1, leftPtr, false, true});
             }
+        }else{
+            if (!node->right) {
+                s.push({node, node->right, depth - 1, rightPtr, true, false});
+            } else {
+                s.push({node, node->right, depth - 1, rightPtr, false, false});
+            }
+            
         }
     }
 
