@@ -3,7 +3,7 @@
 #ifdef TEST_ALLOC
 #include <iostream>
 #endif
-#include <cstdio>
+#include <stack>
 
 using namespace std;
 
@@ -77,7 +77,8 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize, unsigned int minBlockE
  */
 Buddy::~Buddy()
 {
-    destroyTree(root);
+    //DestroyTree(root);
+    destroyTreeIterative(root);
 }
 
 /**
@@ -97,12 +98,13 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
 
     // Root case
     if(blockExp == maxBlockExp) {
-        if(isRootOccupied || isRootUnusable || root->left || root->right) return make_pair(nullptr, blockSize);
-        isRootOccupied = true; // Mark the root as occupied
-        return make_pair(alignedBase, blockSize); // Return the aligned base address
+        if(isRootUnusable || root->left || root->right) return make_pair(nullptr, blockSize);
+        isRootOccupied = true;
+        return make_pair(alignedBase, blockSize);
     }
 
-    unsigned int *ptr = allocate(root, blockExp, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase));
+    //unsigned int *ptr = allocate(root, blockExp, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase));
+    unsigned int *ptr = allocateIterative(blockExp);
     return make_pair(ptr, blockSize);
 }
 
@@ -113,6 +115,7 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
  * \param targetExp The exponent of the block size to allocate (2^targetExp).
  * \param depthExp The current depth exponent in the buddy tree.
  * \param memPtrValue Value of the pointer to the memory location that the current node manages.
+ * \param newNode Indicates whether the current node is a new node.
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
 unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode){
@@ -149,6 +152,57 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
         newNode2 = true;
     }
     return allocate(node->right, targetExp, depthExp - 1, rightMemPtrValue, newNode2);
+}
+
+unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
+    
+    stack<Frame> s;
+    s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
+    unsigned int *result = nullptr;
+
+    while (!s.empty()) {
+        Frame& f = s.top();
+        s.pop();
+        if (f.node->unusable 
+            || (!f.newNode && !f.node->left && !f.node->right && f.depth > targetExp + 1)) {
+            continue;
+        }
+
+        unsigned int local_offset = 1 << (f.depth - 1);
+        unsigned int leftPtr = f.ptr;
+        unsigned int rightPtr = f.ptr + local_offset;
+
+        // Base case: we're one level above the target
+        if (f.depth == targetExp + 1) {
+            if (!f.node->left) {
+                f.node->left = new Node();
+                result = reinterpret_cast<unsigned int*>(leftPtr);
+                break;
+            } else if (!f.node->right) {
+                f.node->right = new Node();
+                result = reinterpret_cast<unsigned int*>(rightPtr);
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        if (!f.node->left) {
+            f.node->left = new Node();
+            s.push({f.node->left, f.depth - 1, leftPtr, true});
+        } else {
+            s.push({f.node->left, f.depth - 1, leftPtr, false});
+        }
+
+         if (!f.node->right) {
+            f.node->right = new Node();
+            s.push({f.node->right, f.depth - 1, rightPtr, true});
+        } else {
+            s.push({f.node->right, f.depth - 1, rightPtr, false});
+        }
+    }
+    
+    return result; // If no suitable block was found, return nullptr
 }
 
 /**
@@ -230,10 +284,12 @@ unsigned int Buddy::deallocate(unsigned int ptrValue) {
     }
 
     if(isLeftChild){
-        destroyTree(parent->left);
+        //destroyTree(parent->left);
+        destroyTreeIterative(parent->left);
         parent->left = nullptr;
     } else {
-        destroyTree(parent->right);
+        //destroyTree(parent->right);
+        destroyTreeIterative(parent->right);
         parent->right = nullptr; 
     }
     return depthExp;
@@ -277,7 +333,8 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
 
     // If allocation failed, allocate the deallocated block
     if (!newBlockPtr) {
-        newBlockPtr = allocateSpecific(root, oldBlockExp, ptrValue, maxBlockExp, alignedBaseValue);
+        //newBlockPtr = allocateSpecific(root, oldBlockExp, ptrValue, maxBlockExp, alignedBaseValue);
+        newBlockPtr = allocateSpecificIterative(oldBlockExp, ptrValue);
     }
 
     return newBlockPtr;
@@ -291,6 +348,7 @@ unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
  * \param targetPtrValue Value of the Pointer to the target memory location.
  * \param depthExp The current depth exponent in the buddy tree.
  * \param memPtrValue Value of the Pointer to the memory location that the current node manages.
+ * @param newNode Indicates whether the current node is a new node.
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
 unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode) {
@@ -329,6 +387,59 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     }
 }
 
+unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtr) {
+    
+    stack<Frame> s;
+    s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
+    unsigned int *result = nullptr;
+
+    while (!s.empty()) {
+        Frame& f = s.top();
+        s.pop();
+
+        if (f.node->unusable 
+            || (!f.newNode && !f.node->left && !f.node->right && f.depth > targetExp + 1)) {
+            continue;
+        }
+
+        unsigned int local_offset = 1 << (f.depth - 1);
+        unsigned int leftPtr = f.ptr;
+        unsigned int rightPtr = f.ptr + local_offset;
+
+        // Base case: we're one level above the target
+        if (f.depth == targetExp + 1) {
+            if (!f.node->left && leftPtr == targetPtr) {
+                f.node->left = new Node();
+                result = reinterpret_cast<unsigned int*>(leftPtr);
+                break;
+            }else if(!f.node->right && rightPtr == targetPtr) {
+                f.node->right = new Node();
+                result = reinterpret_cast<unsigned int*>(rightPtr);
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        if(leftPtr <= targetPtr && rightPtr  > targetPtr) {
+            if (!f.node->left) {
+                f.node->left = new Node();
+                s.push({f.node->left, f.depth - 1, leftPtr, true});
+            } else {
+                s.push({f.node->left, f.depth - 1, leftPtr, false});
+            }
+        }else{
+            if (!f.node->right) {
+                f.node->right = new Node();
+                s.push({f.node->right, f.depth - 1, rightPtr, true});
+            } else {
+                s.push({f.node->right, f.depth - 1, rightPtr, false});
+            }
+        }
+    }
+    
+    return result; // If no suitable block was found, return nullptr
+}
 /*
  * Calculate the ceiling of log base 2 of a number.
  * This function returns the smallest uint e such that 2^e >= x.
@@ -356,6 +467,19 @@ void Buddy::destroyTree(Node* node)
     destroyTree(node->left);
     destroyTree(node->right);
     delete node;
+}
+
+void Buddy::destroyTreeIterative(Node* node)
+{
+    stack<Node*> s;
+    s.push(node);
+    while (!s.empty()) {
+        Node* current = s.top();
+        s.pop();
+        if (current->left) s.push(current->left);
+        if (current->right) s.push(current->right);
+        delete current;
+    }
 }
 
 #ifdef TEST_ALLOC
