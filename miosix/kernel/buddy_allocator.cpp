@@ -403,60 +403,76 @@ unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsign
     }
 }
 
+
 unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtr) {
-    /**
+        
     stack<Frame> s;
-    s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
+    s.push({root, root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false, true});
     unsigned int *result = nullptr;
 
     while (!s.empty()) {
         Frame& f = s.top();
         s.pop();
+        Node* prevNode = f.prevNode;
+        Node* node = f.node;
+        unsigned int depth = f.depth;
+        unsigned int ptr = f.ptr;
+        bool newNode = f.newNode;
+        bool isLeft = f.isLeft;
 
-        if (f.node->unusable 
-            || (!f.newNode && !f.node->left && !f.node->right && f.depth > targetExp + 1)) {
+        printf("Processing node at depth %u with pointer %x\n", depth, ptr);
+        if(newNode) {
+            node = new Node(); // Create a new node if it's a new node
+            if(isLeft) {
+                prevNode->left = node; // Link the new node to the left child
+            } else {
+                prevNode->right = node; // Link the new node to the right child
+            }
+        }
+        if (node->unusable 
+            || (!newNode && !node->left && !node->right && depth != maxBlockExp)) {
             continue;
         }
 
-        unsigned int local_offset = 1 << (f.depth - 1);
-        unsigned int leftPtr = f.ptr;
-        unsigned int rightPtr = f.ptr + local_offset;
+
+        unsigned int local_offset = 1 << (depth - 1);
+        unsigned int leftPtr = ptr;
+        unsigned int rightPtr = ptr + local_offset;
 
         // Base case: we're one level above the target
-        if (f.depth == targetExp + 1) {
-            if (!f.node->left && leftPtr == targetPtr) {
-                f.node->left = new Node();
+        if (depth == targetExp + 1) {
+            if (!node->left && leftPtr == targetPtr) {
+                node->left = new Node();
                 result = reinterpret_cast<unsigned int*>(leftPtr);
                 break;
-            }else if(!f.node->right && rightPtr == targetPtr) {
-                f.node->right = new Node();
+            } else if (!node->right && rightPtr == targetPtr) {
+                node->right = new Node();
                 result = reinterpret_cast<unsigned int*>(rightPtr);
                 break;
             } else {
                 continue;
             }
         }
-
+        
         if(leftPtr <= targetPtr && rightPtr  > targetPtr) {
-            if (!f.node->left) {
-                f.node->left = new Node();
-                s.push({f.node->left, f.depth - 1, leftPtr, true});
+            if (!node->right) {
+                s.push({node, node->right, depth - 1, rightPtr, true, false});
             } else {
-                s.push({f.node->left, f.depth - 1, leftPtr, false});
+                s.push({node, node->right, depth - 1, rightPtr, false, false});
             }
         }else{
-            if (!f.node->right) {
-                f.node->right = new Node();
-                s.push({f.node->right, f.depth - 1, rightPtr, true});
+            if (!node->left) {
+                s.push({node, node->left, depth - 1, leftPtr, true, true});
             } else {
-                s.push({f.node->right, f.depth - 1, rightPtr, false});
+                s.push({node, node->left, depth - 1, leftPtr, false, true});
             }
         }
     }
+
     
-    return result; // If no suitable block was found, return nullptr */
-    return nullptr;
+    return result; // If no suitable block was found, return nullptr
 }
+
 /*
  * Calculate the ceiling of log base 2 of a number.
  * This function returns the smallest uint e such that 2^e >= x.
