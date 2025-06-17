@@ -157,31 +157,36 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
 unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
     
     stack<Frame> s;
-    s.push(Frame(root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false));
+    s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
     unsigned int *result = nullptr;
 
     while (!s.empty()) {
         Frame& f = s.top();
         s.pop();
-        printf("Processing node at depth %u with pointer %x\n", f.depth, f.ptr);
-        if (f.node->unusable 
-            || (!f.newNode && !f.node->left && !f.node->right && f.depth > targetExp + 1)) {
+        Node* node = f.node;
+        unsigned int depth = f.depth;
+        unsigned int ptr = f.ptr;
+        bool newNode = f.newNode;
+
+        printf("Processing node at depth %u with pointer %x\n", depth, ptr);
+        if (node->unusable 
+            || (!newNode && !node->left && !node->right && depth > targetExp + 1)) {
             continue;
         }
 
 
-        unsigned int local_offset = 1 << (f.depth - 1);
-        unsigned int leftPtr = f.ptr;
-        unsigned int rightPtr = f.ptr + local_offset;
+        unsigned int local_offset = 1 << (depth - 1);
+        unsigned int leftPtr = ptr;
+        unsigned int rightPtr = ptr + local_offset;
 
         // Base case: we're one level above the target
-        if (f.depth == targetExp + 1) {
-            if (!f.node->left) {
-                f.node->left = new Node();
+        if (depth == targetExp + 1) {
+            if (!node->left) {
+                node->left = new Node();
                 result = reinterpret_cast<unsigned int*>(leftPtr);
                 break;
-            } else if (!f.node->right) {
-                f.node->right = new Node();
+            } else if (!node->right) {
+                node->right = new Node();
                 result = reinterpret_cast<unsigned int*>(rightPtr);
                 break;
             } else {
@@ -189,18 +194,18 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             }
         }
         
-        if (!f.node->left) {
-            f.node->left = new Node();
-            s.push(Frame(f.node->left, f.depth - 1, leftPtr, true));
+        if (!node->left) {
+            node->left = new Node();
+            s.push({node->left, depth - 1, leftPtr, true});
         } else {
-            s.push(Frame(f.node->left, f.depth - 1, leftPtr, false));
+            s.push({node->left, depth - 1, leftPtr, false});
         }
 
-        if (!f.node->right) {
-            f.node->right = new Node();
-            s.push(Frame(f.node->right, f.depth - 1, rightPtr, true));
+        if (!node->right) {
+            node->right = new Node();
+            s.push({node->right, depth - 1, rightPtr, true});
         } else {
-            s.push(Frame(f.node->right, f.depth - 1, rightPtr, false));
+            s.push({node->right, depth - 1, rightPtr, false});
         }
         
     }
