@@ -194,6 +194,13 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             }
         }
         
+        if (!node->right) {
+            node->right = new Node();
+            s.push({node->right, depth - 1, rightPtr, true});
+        } else {
+            s.push({node->right, depth - 1, rightPtr, false});
+        }
+        
         if (!node->left) {
             node->left = new Node();
             s.push({node->left, depth - 1, leftPtr, true});
@@ -201,12 +208,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             s.push({node->left, depth - 1, leftPtr, false});
         }
 
-        if (!node->right) {
-            node->right = new Node();
-            s.push({node->right, depth - 1, rightPtr, true});
-        } else {
-            s.push({node->right, depth - 1, rightPtr, false});
-        }
+        
         
     }
     
