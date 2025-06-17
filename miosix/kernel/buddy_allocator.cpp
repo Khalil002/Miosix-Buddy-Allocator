@@ -157,7 +157,7 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
 unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
     
     stack<Frame> s;
-    s.push({root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false});
+    s.push(Frame(root, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase), false));
     unsigned int *result = nullptr;
 
     while (!s.empty()) {
@@ -188,24 +188,20 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
                 continue;
             }
         }
-
-        unsigned int depth = f.depth - 1;
+        
         if (!f.node->left) {
             f.node->left = new Node();
-            s.push({f.node->left, depth, leftPtr, true});
+            s.push(Frame(f.node->left, f.depth - 1, leftPtr, true));
         } else {
-            s.push({f.node->left, depth, leftPtr, false});
+            s.push(Frame(f.node->left, f.depth - 1, leftPtr, false));
         }
 
         if (!f.node->right) {
             f.node->right = new Node();
-            s.push({f.node->right, depth, rightPtr, true});
+            s.push(Frame(f.node->right, f.depth - 1, rightPtr, true));
         } else {
-            s.push({f.node->right, depth, rightPtr, false});
+            s.push(Frame(f.node->right, f.depth - 1, rightPtr, false));
         }
-
-        
-
         
     }
     

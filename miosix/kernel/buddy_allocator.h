@@ -68,6 +68,8 @@ private:
         unsigned int depth;
         unsigned int ptr;
         bool newNode;
+        Frame(Node* n, unsigned int d, unsigned int p, bool newN) 
+            : node(n), depth(d), ptr(p), newNode(newN) {}
     };
 
     unsigned int ceiling_log2(unsigned int x);
