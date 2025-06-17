@@ -588,3 +588,5 @@ void Buddy::printMetadata() const {
         << " = "                   << maxBlockSize  << " bytes" << endl;
 }
 #endif //TEST_ALLOC
+
+//G_SLICE=always-malloc G_DEBUG=gc-friendly  valgrind -v --tool=memcheck --leak-check=full --num-callers=40 --log-file=valgrind.log $(which <program>) <arguments>
