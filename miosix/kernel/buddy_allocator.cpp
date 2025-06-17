@@ -162,7 +162,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
 
     while (!s.empty()) {
         Frame& f = s.top();
-        //s.pop();
+        s.pop();
         printf("Processing node at depth %u with pointer %x\n", f.depth, f.ptr);
         if (f.node->unusable 
             || (!f.newNode && !f.node->left && !f.node->right && f.depth > targetExp + 1)) {
