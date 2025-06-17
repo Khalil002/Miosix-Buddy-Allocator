@@ -169,6 +169,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             continue;
         }
 
+
         unsigned int local_offset = 1 << (f.depth - 1);
         unsigned int leftPtr = f.ptr;
         unsigned int rightPtr = f.ptr + local_offset;
@@ -188,18 +189,19 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             }
         }
 
+        unsigned int depth = f.depth - 1;
         if (!f.node->left) {
             f.node->left = new Node();
-            s.push({f.node->left, f.depth - 1, leftPtr, true});
+            s.push({f.node->left, depth, leftPtr, true});
         } else {
-            s.push({f.node->left, f.depth - 1, leftPtr, false});
+            s.push({f.node->left, depth, leftPtr, false});
         }
 
         if (!f.node->right) {
             f.node->right = new Node();
-            s.push({f.node->right, f.depth - 1, rightPtr, true});
+            s.push({f.node->right, depth, rightPtr, true});
         } else {
-            s.push({f.node->right, f.depth - 1, rightPtr, false});
+            s.push({f.node->right, depth, rightPtr, false});
         }
 
         
