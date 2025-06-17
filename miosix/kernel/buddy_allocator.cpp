@@ -180,7 +180,7 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
             }
         }
         if (node->unusable 
-            || (!newNode && !node->left && !node->right && depth > targetExp + 1)) {
+            || (!newNode && !node->left && !node->right && depth != maxBlockExp)) {
             continue;
         }
 
