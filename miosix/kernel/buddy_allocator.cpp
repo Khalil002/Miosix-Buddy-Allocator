@@ -170,7 +170,6 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
         bool newNode = f.newNode;
         bool isLeft = f.isLeft;
 
-        printf("Processing node at depth %u with pointer %x\n", depth, ptr);
         if(newNode) {
             node = new Node(); // Create a new node if it's a new node
             if(isLeft) {
@@ -420,7 +419,6 @@ unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned 
         bool newNode = f.newNode;
         bool isLeft = f.isLeft;
 
-        printf("Processing s node at depth %u with pointer %x\n", depth, ptr);
         if(newNode) {
             node = new Node(); // Create a new node if it's a new node
             if(isLeft) {
@@ -588,5 +586,3 @@ void Buddy::printMetadata() const {
         << " = "                   << maxBlockSize  << " bytes" << endl;
 }
 #endif //TEST_ALLOC
-
-//G_SLICE=always-malloc G_DEBUG=gc-friendly  valgrind -v --tool=memcheck --leak-check=full --num-callers=40 --log-file=valgrind.log $(which <program>) <arguments>

@@ -58,7 +58,7 @@ ProcessPool& ProcessPool::instance()
         reinterpret_cast<unsigned int>(&_process_pool_start));
     return pool;
     #else //TEST_ALLOC
-    static ProcessPool pool(reinterpret_cast<unsigned int*>(0x20008000),(1<<14)+1);
+    static ProcessPool pool(reinterpret_cast<unsigned int*>(0x20008001),(1<<14)+0);
     return pool;
     #endif //TEST_ALLOC
 }
