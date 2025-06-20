@@ -1,9 +1,14 @@
 #include "buddy_allocator.h"
 #include <stdexcept>
+
+
 #ifdef TEST_ALLOC
 #include <iostream>
 #endif
+
+#ifndef RECURSIVE_IMPLEMENTATION
 #include <stack>
+#endif
 
 using namespace std;
 
@@ -77,8 +82,11 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize, unsigned int minBlockE
  */
 Buddy::~Buddy()
 {
-    //DestroyTree(root);
+    #ifdef RECURSIVE_IMPLEMENTATION
+    destroyTree(root);
+    #else
     destroyTreeIterative(root);
+    #endif
 }
 
 /**
@@ -103,11 +111,111 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
         return make_pair(alignedBase, blockSize);
     }
 
-    //unsigned int *ptr = allocate(root, blockExp, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase));
+    #ifdef RECURSIVE_IMPLEMENTATION
+    unsigned int *ptr = allocate(root, blockExp, maxBlockExp, reinterpret_cast<unsigned int>(alignedBase));
+    #else
     unsigned int *ptr = allocateIterative(blockExp);
+    #endif
     return make_pair(ptr, blockSize);
 }
 
+/**
+ * \brief Deallocate a memory block.
+ * This function deallocates a memory block pointed to by the given pointer.
+ * \param ptr Pointer to the memory block to deallocate.
+ * \throws invalid_argument if the pointer is null, out of bounds, or not aligned.
+ */
+void Buddy::deallocate(unsigned int *ptr){
+    // No action if the pointer is null
+    if (!ptr) return;
+
+    // Check if the pointer is aligned to the minimum block size
+    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
+    if (ptrValue % minBlockSize != 0) {
+        throw invalid_argument("Pointer is not aligned to the minimum block size.");
+    }
+
+    // Check if the pointer is within the bounds of the memory pool
+    unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
+    if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
+        throw invalid_argument("Pointer is out of bounds of the memory pool.");
+    }
+    #ifdef RECURSIVE_IMPLEMENTATION
+    deallocate(nullptr, root, ptrValue, maxBlockExp, alignedBaseValue, false);
+    #else
+    deallocateIterative(ptrValue);
+    #endif
+}
+
+/**
+ * \brief Reallocate a memory block into a block of the given size (data is not copied).
+ * \param ptr Pointer to the memory block.
+ * \param newSize The new size of the memory block in bytes.
+ * \return Pointer to the reallocated memory block, in case of failure it returns the original pointer.
+ * \throws invalid_argument if the pointer is null or out of bounds or not aligned.
+ */
+unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
+    if (!ptr) throw invalid_argument("Pointer is null.");
+
+    if (newSize < minBlockSize || newSize > maxBlockSize) {
+        throw invalid_argument("Invalid allocation size.");
+    }
+
+    // Calculate the offset from the aligned base address
+    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
+    if (ptrValue % minBlockSize != 0) {
+        throw invalid_argument("Pointer is not aligned to the minimum block size.");
+    }
+
+    // Check if the pointer is within the bounds of the memory pool
+    unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
+    if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
+        throw invalid_argument("Pointer is out of bounds of the memory pool.");
+    }
+    
+    // Deallocate the current block
+    #ifdef RECURSIVE_IMPLEMENTATION
+    unsigned int oldBlockExp = deallocate(nullptr, root, ptrValue, maxBlockExp, alignedBaseValue, false);
+    #else
+    unsigned int oldBlockExp = deallocateIterative(ptrValue);
+    #endif
+    if(oldBlockExp==0) {
+        throw invalid_argument("Pointer does not point to a valid block.");
+    }
+    
+    // Allocate a new block with the requested size
+    pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
+    unsigned int *newBlockPtr = newBlock.first;
+
+    // If allocation failed, allocate the deallocated block
+    if (!newBlockPtr) {
+        #ifdef RECURSIVE_IMPLEMENTATION
+        newBlockPtr = allocateSpecific(root, oldBlockExp, ptrValue, maxBlockExp, alignedBaseValue);
+        #else
+        newBlockPtr = allocateSpecificIterative(oldBlockExp, ptrValue);
+        #endif
+    }
+
+    return newBlockPtr;
+}
+
+/*
+ * Calculate the ceiling of log base 2 of a number.
+ * This function returns the smallest uint e such that 2^e >= x.
+ */
+unsigned int Buddy::ceiling_log2(unsigned int x)
+{
+    if (x == 0) return 0;
+    x--;
+    unsigned int e = 0;
+    while (x > 0) {
+        x >>= 1;
+        ++e;
+    }
+    return e;
+}
+
+#ifdef RECURSIVE_IMPLEMENTATION
 /**
  * \brief Recursively allocate a memory block in the buddy tree.
  * This function traverses the buddy tree to find a suitable block for allocation.
@@ -119,8 +227,8 @@ pair<unsigned int *, unsigned int>Buddy::allocate(unsigned int size){
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
 unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode){
-    if (node->unusable) return nullptr;
-    if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr; // If the parent of the target block has no children but is not a new node, this means the parent node is allocated
+    if (node->unusable) return nullptr; // Unusable block
+    if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr; // Allocated parent
 
     unsigned int leftMemPtrValue = memPtrValue;
     unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
@@ -154,6 +262,116 @@ unsigned int *Buddy::allocate(Node *node, unsigned int targetExp, unsigned int d
     return allocate(node->right, targetExp, depthExp - 1, rightMemPtrValue, newNode2);
 }
 
+/**
+ * \brief Allocate a specific block in the buddy tree.
+ * This function allocates a block of memory at a specific location in the buddy tree.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param targetExp The exponent of the block size to allocate (2^targetExp).
+ * \param targetPtrValue Value of the Pointer to the target memory location.
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memPtrValue Value of the Pointer to the memory location that the current node manages.
+ * @param newNode Indicates whether the current node is a new node.
+ * \return Pointer to the allocated memory, or nullptr if allocation fails.
+ */
+unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode) {
+    
+    if (node->unusable) return nullptr;
+    if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr;
+
+    unsigned int leftMemPtrValue = memPtrValue;
+    unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
+    unsigned int rightMemPtrValue  = memPtrValue + local_offset;
+
+    if (depthExp == targetExp+1){
+        if (!node->left && leftMemPtrValue == targetPtrValue) {
+            node->left = new Node();
+            return reinterpret_cast<unsigned int*>(leftMemPtrValue);
+        }else if(!node->right && rightMemPtrValue == targetPtrValue) {
+            node->right = new Node();
+            return reinterpret_cast<unsigned int*>(rightMemPtrValue);
+        }else{
+            return nullptr; // If both children exist, allocation fails
+        }
+    }
+
+    bool newNode2 = newNode;
+    if(leftMemPtrValue <= targetPtrValue && rightMemPtrValue  > targetPtrValue) {
+        if (!node->left){
+            node->left = new Node();
+            newNode2 = true;
+        }
+        return allocateSpecific(node->left, targetExp, targetPtrValue, depthExp - 1, leftMemPtrValue, newNode2);
+    }else{
+        if (!node->right){
+            node->right = new Node();
+            newNode2 = true;
+        }
+        return allocateSpecific(node->right, targetExp, targetPtrValue, depthExp - 1, rightMemPtrValue, newNode2);
+    }
+}
+
+/**
+ * \brief Deallocate a memory block in the buddy tree.
+ * This function traverses the buddy tree to find and deallocate a specific block of memory.
+ * \param parentNode Pointer to the parent node in the buddy tree. (the node from where we can remove useless nodes)
+ * \param node Pointer to the current node in the buddy tree.
+ * \param targetPtr The pointer value of the target memory location to deallocate.
+ * \param depthExp The current depth exponent in the buddy tree.
+ * \param memPtr Memory pointer value of the current node.
+ * \param isLeft Indicates the path taken from parent node to reach the target node.
+ * \return The depth exponent of the block after deallocation, or 0 if deallocation fails.
+ */
+unsigned int Buddy::deallocate(Node *parentNode, Node *node, unsigned int targetPtr, unsigned int depthExp, unsigned int memPtr, bool isLeft){
+    if (!node || node->unusable || depthExp<minBlockExp) return 0;
+
+    // Success case: if the node has no children and pointer matches, deallocate it
+    if (!node->left && !node->right && memPtr == targetPtr) {
+        // If the node is the root, we only need to mark it as not occupied
+        if(depthExp == maxBlockExp) {
+            isRootOccupied = false;
+        }else{
+            if(isLeft) {
+                destroyTree(node->left);
+                parentNode->left = nullptr; // Remove the left child
+            } else {
+                destroyTree(node->right);
+                parentNode->right = nullptr; // Remove the right child
+            }
+        }
+        return depthExp;
+    }
+
+    unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
+    unsigned int leftMemPtr = memPtr;
+    unsigned int rightMemPtr = memPtr + local_offset;
+    if(leftMemPtr <= targetPtr && rightMemPtr > targetPtr) {
+        if(node->right){
+            parentNode = node;
+        }
+        return deallocate(parentNode, node->left, targetPtr, depthExp - 1, leftMemPtr, true);
+    }else{
+        if(node->left){
+            parentNode = node;
+        }
+        return deallocate(parentNode, node->right, targetPtr, depthExp - 1, rightMemPtr, false);
+    }
+}
+
+void Buddy::destroyTree(Node* node)
+{
+    if (node == nullptr) return;
+    destroyTree(node->left);
+    destroyTree(node->right);
+    delete node;
+}
+
+#else
+/**
+ * \brief Allocate a memory block in the buddy tree iteratively.
+ * This function traverses the buddy tree to find a suitable block for allocation using an iterative approach.
+ * \param targetExp The exponent of the block size to allocate (2^targetExp).
+ * \return Pointer to the allocated memory, or nullptr if allocation fails.
+ */
 unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
     
     stack<Frame> s;
@@ -220,189 +438,12 @@ unsigned int *Buddy::allocateIterative(unsigned int targetExp) {
 }
 
 /**
- * \brief Deallocate a memory block.
- * This function deallocates a memory block pointed to by the given pointer.
- * \param ptr Pointer to the memory block to deallocate.
- * \throws invalid_argument if the pointer is null, out of bounds, or not aligned.
- */
-void Buddy::deallocate(unsigned int *ptr){
-    // No action if the pointer is null
-    if (!ptr) return;
-
-    // Check if the pointer is aligned to the minimum block size
-    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
-    if (ptrValue % minBlockSize != 0) {
-        throw invalid_argument("Pointer is not aligned to the minimum block size.");
-    }
-
-    // Check if the pointer is within the bounds of the memory pool
-    unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
-    if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
-        throw invalid_argument("Pointer is out of bounds of the memory pool.");
-    }
-
-    //deallocateRecursive(root, ptr, maxBlockExp, alignedBase);
-    deallocate(ptrValue); // Use iterative deallocation (no parent pointer needed)
-}
-
-/**
- * \brief Deallocate a memory block pointed to by the given pointer.
- * \param ptrValue The value of the pointer to the memory block to deallocate.
- * \return The depth exponent of the block after deallocation.
- */
-unsigned int Buddy::deallocate(unsigned int ptrValue) {
-    Node* node = root;
-    Node* parent = root;
-    bool isLeftChild = true;
-    bool found = false;
-    unsigned int depthExp = maxBlockExp;
-    unsigned int targetMem = ptrValue;
-    unsigned int currentMem = reinterpret_cast<unsigned int>(alignedBase);
-    
-    while(true){
-        if(!node || node->unusable || depthExp<minBlockExp) break;
-
-        if(!node->left && !node->right && currentMem == targetMem) {
-            found = true; // Found the target node
-            break;
-        }
-
-        unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
-        unsigned int leftMem = currentMem;
-        unsigned int rightMem = currentMem + local_offset;
-
-        if(leftMem <= targetMem && rightMem > targetMem) {
-            if(node->right){
-                parent = node;
-                isLeftChild = true;
-            }
-            currentMem = leftMem; // Update current memory location
-            node = node->left; // Move to the left child
-        } else {
-            if(node->left){
-                parent = node;
-                isLeftChild = false;
-            }
-            currentMem = rightMem; // Update current memory location
-            node = node->right; // Move to the right child
-        }
-        depthExp--; // Decrease the depth exponent
-    }
-
-    if(!found) return 0; // If the target node was not found, do nothing
-
-    // If the target node is the root, mark it as not occupied 
-    if(depthExp == maxBlockExp) {
-        isRootOccupied = false;
-        return depthExp;
-    }
-
-    if(isLeftChild){
-        //destroyTree(parent->left);
-        destroyTreeIterative(parent->left);
-        parent->left = nullptr;
-    } else {
-        //destroyTree(parent->right);
-        destroyTreeIterative(parent->right);
-        parent->right = nullptr; 
-    }
-    return depthExp;
-}
-
-/**
- * \brief Reallocate a memory block into a block of the given size (data is not copied).
- * \param ptr Pointer to the memory block.
- * \param newSize The new size of the memory block in bytes.
- * \return Pointer to the reallocated memory block, in case of failure it returns the original pointer.
- * \throws invalid_argument if the pointer is null or out of bounds or not aligned.
- */
-unsigned int *Buddy::reallocate(unsigned int *ptr, unsigned int newSize){
-    if (!ptr) throw invalid_argument("Pointer is null.");
-
-    if (newSize < minBlockSize || newSize > maxBlockSize) {
-        throw invalid_argument("Invalid allocation size.");
-    }
-
-    // Calculate the offset from the aligned base address
-    unsigned int ptrValue = reinterpret_cast<unsigned int>(ptr);
-    if (ptrValue % minBlockSize != 0) {
-        throw invalid_argument("Pointer is not aligned to the minimum block size.");
-    }
-
-    // Check if the pointer is within the bounds of the memory pool
-    unsigned int alignedBaseValue = reinterpret_cast<unsigned int>(alignedBase);
-    if(ptrValue < alignedBaseValue || ptrValue >= (alignedBaseValue + alignedSize)) {
-        throw invalid_argument("Pointer is out of bounds of the memory pool.");
-    }
-    
-    // Deallocate the current block
-    unsigned int oldBlockExp = deallocate(ptrValue);
-    if(oldBlockExp==0) {
-        throw invalid_argument("Pointer does not point to a valid block.");
-    }
-    
-    // Allocate a new block with the requested size
-    pair<unsigned int*, unsigned int> newBlock = allocate(newSize);
-    unsigned int *newBlockPtr = newBlock.first;
-
-    // If allocation failed, allocate the deallocated block
-    if (!newBlockPtr) {
-        //newBlockPtr = allocateSpecific(root, oldBlockExp, ptrValue, maxBlockExp, alignedBaseValue);
-        newBlockPtr = allocateSpecificIterative(oldBlockExp, ptrValue);
-    }
-
-    return newBlockPtr;
-}
-
-/**
- * \brief Allocate a specific block in the buddy tree.
- * This function allocates a block of memory at a specific location in the buddy tree.
- * \param node Pointer to the current node in the buddy tree.
+ * \brief Allocate a specific block in the buddy tree iteratively.
+ * This function allocates a block of memory at a specific location in the buddy tree using an iterative approach.
  * \param targetExp The exponent of the block size to allocate (2^targetExp).
- * \param targetPtrValue Value of the Pointer to the target memory location.
- * \param depthExp The current depth exponent in the buddy tree.
- * \param memPtrValue Value of the Pointer to the memory location that the current node manages.
- * @param newNode Indicates whether the current node is a new node.
+ * \param targetPtr The pointer value of the target memory location.
  * \return Pointer to the allocated memory, or nullptr if allocation fails.
  */
-unsigned int *Buddy::allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode) {
-    
-    if (node->unusable) return nullptr;
-    if(!newNode && !node->left && !node->right && targetExp+1<maxBlockExp) return nullptr;
-
-    unsigned int leftMemPtrValue = memPtrValue;
-    unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
-    unsigned int rightMemPtrValue  = memPtrValue + local_offset;
-
-    if (depthExp == targetExp+1){
-        if (!node->left && leftMemPtrValue == targetPtrValue) {
-            node->left = new Node();
-            return reinterpret_cast<unsigned int*>(leftMemPtrValue);
-        }else if(!node->right && rightMemPtrValue == targetPtrValue) {
-            node->right = new Node();
-            return reinterpret_cast<unsigned int*>(rightMemPtrValue);
-        }else{
-            return nullptr; // If both children exist, allocation fails
-        }
-    }
-
-    bool newNode2 = newNode;
-    if(leftMemPtrValue <= targetPtrValue && rightMemPtrValue  > targetPtrValue) {
-        if (!node->left){
-            node->left = new Node();
-            newNode2 = true;
-        }
-        return allocateSpecific(node->left, targetExp, targetPtrValue, depthExp - 1, leftMemPtrValue, newNode2);
-    }else{
-        if (!node->right){
-            node->right = new Node();
-            newNode2 = true;
-        }
-        return allocateSpecific(node->right, targetExp, targetPtrValue, depthExp - 1, rightMemPtrValue, newNode2);
-    }
-}
-
-
 unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtr) {
         
     stack<Frame> s;
@@ -472,20 +513,68 @@ unsigned int *Buddy::allocateSpecificIterative(unsigned int targetExp, unsigned 
     return result; // If no suitable block was found, return nullptr
 }
 
-/*
- * Calculate the ceiling of log base 2 of a number.
- * This function returns the smallest uint e such that 2^e >= x.
+/**
+ * \brief Deallocate a memory block pointed to by the given pointer.
+ * \param ptrValue The value of the pointer to the memory block to deallocate.
+ * \return The depth exponent of the block after deallocation.
  */
-unsigned int Buddy::ceiling_log2(unsigned int x)
-{
-    if (x == 0) return 0;
-    x--;
-    unsigned int e = 0;
-    while (x > 0) {
-        x >>= 1;
-        ++e;
+unsigned int Buddy::deallocateIterative(unsigned int ptrValue) {
+    Node* node = root;
+    Node* parent = root;
+    bool isLeftChild = true;
+    bool found = false;
+    unsigned int depthExp = maxBlockExp;
+    unsigned int targetMem = ptrValue;
+    unsigned int currentMem = reinterpret_cast<unsigned int>(alignedBase);
+    
+    while(true){
+        if(!node || node->unusable || depthExp<minBlockExp) break;
+
+        if(!node->left && !node->right && currentMem == targetMem) {
+            found = true; // Found the target node
+            break;
+        }
+
+        unsigned int local_offset = 1 << (depthExp - 1); // size of half the block
+        unsigned int leftMem = currentMem;
+        unsigned int rightMem = currentMem + local_offset;
+
+        if(leftMem <= targetMem && rightMem > targetMem) {
+            if(node->right){
+                parent = node;
+                isLeftChild = true;
+            }
+            currentMem = leftMem; // Update current memory location
+            node = node->left; // Move to the left child
+        } else {
+            if(node->left){
+                parent = node;
+                isLeftChild = false;
+            }
+            currentMem = rightMem; // Update current memory location
+            node = node->right; // Move to the right child
+        }
+        depthExp--; // Decrease the depth exponent
     }
-    return e;
+
+    if(!found) return 0; // If the target node was not found, do nothing
+
+    // If the target node is the root, mark it as not occupied 
+    if(depthExp == maxBlockExp) {
+        isRootOccupied = false;
+        return depthExp;
+    }
+
+    if(isLeftChild){
+        //destroyTree(parent->left);
+        destroyTreeIterative(parent->left);
+        parent->left = nullptr;
+    } else {
+        //destroyTree(parent->right);
+        destroyTreeIterative(parent->right);
+        parent->right = nullptr; 
+    }
+    return depthExp;
 }
 
 /**
@@ -493,16 +582,9 @@ unsigned int Buddy::ceiling_log2(unsigned int x)
  * This function deletes all nodes in the buddy tree/subtree to free memory.
  * \param node Pointer to the current node in the buddy tree.
  */
-void Buddy::destroyTree(Node* node)
-{
-    if (node == nullptr) return;
-    destroyTree(node->left);
-    destroyTree(node->right);
-    delete node;
-}
-
 void Buddy::destroyTreeIterative(Node* node)
-{
+{   
+    if (node == nullptr) return;
     stack<Node*> s;
     s.push(node);
     while (!s.empty()) {
@@ -513,6 +595,7 @@ void Buddy::destroyTreeIterative(Node* node)
         delete current;
     }
 }
+#endif //RECURSIVE_IMPLEMENTATION
 
 #ifdef TEST_ALLOC
 /**
@@ -586,3 +669,4 @@ void Buddy::printMetadata() const {
         << " = "                   << maxBlockSize  << " bytes" << endl;
 }
 #endif //TEST_ALLOC
+

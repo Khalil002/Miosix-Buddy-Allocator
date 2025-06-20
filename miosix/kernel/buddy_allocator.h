@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+
 #ifdef TEST_ALLOC
 #include <string>
 #endif //TEST_ALLOC
@@ -63,6 +64,7 @@ private:
         Node() : left(nullptr), right(nullptr), unusable(false) {}
     };
 
+    #ifndef RECURSIVE_IMPLEMENTATION
     struct Frame {
         Node* prevNode;
         Node* node;
@@ -71,15 +73,21 @@ private:
         bool newNode;
         bool isLeft;
     };
+    #endif //RECURSIVE_IMPLEMENTATION
 
     unsigned int ceiling_log2(unsigned int x);
+    #ifdef RECURSIVE_IMPLEMENTATION
     unsigned int *allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode=false);
-    unsigned int *allocateIterative(unsigned int targetExp);
     unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode=false);
-    unsigned int *allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtrValue);
-    unsigned int deallocate(unsigned int ptr);
+    unsigned int deallocate(Node *parentNode, Node *node, unsigned int targetPtr, unsigned int depthExp, unsigned int memPtr, bool isLeft);
     void destroyTree(Node* node);
+    #else
+    unsigned int *allocateIterative(unsigned int targetExp);
+    unsigned int *allocateSpecificIterative(unsigned int targetExp, unsigned int targetPtrValue);
+    unsigned int deallocateIterative(unsigned int ptr);
     void destroyTreeIterative(Node* node);
+    #endif //RECURSIVE_IMPLEMENTATION
+
     #ifdef TEST_ALLOC
     void printBT(const std::string& prefix, const Node* node, bool isLeft, unsigned int depthExp, unsigned int* memLocation);
     #endif //TEST_ALLOC
