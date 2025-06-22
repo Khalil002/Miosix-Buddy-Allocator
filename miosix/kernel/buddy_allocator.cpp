@@ -374,7 +374,7 @@ void Buddy::allocateUnusableBlocksIterative(){
     unsigned int a = alignedSize - trueMaxBlockSize;
     unsigned int b = floor_log2(a);
     
-    //simple case 1: only one unusable block
+    //simple case 1: only one unusable block to the right of the root
     if(b < minBlockExp) {
         printf("Simple case: Allocating unusable block at the end of the tree b = %u\n", b);
         root->right = new Node();
@@ -403,7 +403,8 @@ void Buddy::allocateUnusableBlocksIterative(){
     printBuddy();
     #endif //TEST_ALLOC
     
-    if(rightPtr == maxPtr) {
+    // simple case 2: only one unusable block at the end of the tree
+    if(rightPtr == maxPtr || (rightPtr < maxPtr && depth == minBlockExp+1)) {
         printf("Simple case 2: Allocating unusable block at the end of the tree\n");
         node->right = new Node();
         node->right->unusable = true;
