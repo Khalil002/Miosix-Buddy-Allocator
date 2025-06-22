@@ -388,7 +388,7 @@ void Buddy::allocateUnusableBlocksIterative(){
     }
 
     #ifdef TEST_ALLOC
-    printtBuddy();
+    printBuddy();
     #endif //TEST_ALLOC
 
     unsigned int trueMaxBlockExp = maxBlockExp-1;
