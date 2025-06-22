@@ -390,7 +390,7 @@ void Buddy::allocateUnusableBlocksIterative(){
     unsigned int rightPtr = memPtr + (1 << (depth - 1));
     unsigned int maxPtr = memPtr + alignedSize;
 
-    while(rightPtr < maxPtr) {
+    while(rightPtr < maxPtr && depth > minBlockExp+1) {
         node->right = new Node();
         node = node->right;
         memPtr = rightPtr;
