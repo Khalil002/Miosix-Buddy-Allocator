@@ -369,6 +369,18 @@ void Buddy::destroyTree(Node* node)
 #else
 
 void Buddy::allocateUnusableBlocksIterative(){
+    unsigned int trueMaxBlockExp = maxBlockExp-1;
+    unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
+    unsigned int a = alignedSize - trueMaxBlockSize;
+    unsigned int b = floor_log2(a);
+    
+    //simple case 1: only one unusable block
+    if(b < minBlockExp) {
+        printf("Simple case: Allocating unusable block at the end of the tree b = %u\n", b);
+        root->right = new Node();
+        root->right->unusable = true;
+        return;
+    }
 
     //Reach the edge of the actual pool
     Node *node = root;
@@ -390,17 +402,11 @@ void Buddy::allocateUnusableBlocksIterative(){
     #ifdef TEST_ALLOC
     printBuddy();
     #endif //TEST_ALLOC
-
-    unsigned int trueMaxBlockExp = maxBlockExp-1;
-    unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
-    unsigned int a = alignedSize - trueMaxBlockSize;
-    unsigned int b = floor_log2(a);
     
-    //simple case 2: only one unusable block
-    if(rightPtr == maxPtr || b < minBlockExp) {
-        printf("Simple case: Allocating unusable block at the end of the tree\n");
-        printf("b block size: %u bytes\n", b);
-        node->unusable = true;
+    if(rightPtr == maxPtr) {
+        printf("Simple case 2: Allocating unusable block at the end of the tree\n");
+        node->right = new Node();
+        node->right->unusable = true;
         return;
     }
 
