@@ -371,6 +371,47 @@ void Buddy::destroyTree(Node* node)
 void Buddy::allocateUnusableBlocksIterative(){
     unsigned int trueMaxBlockExp = maxBlockExp-1;
     unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
+    unsigned int b = floor_log2(alignedSize - trueMaxBlockSize);
+    
+    unsigned int memPtr = reinterpret_cast<unsigned int>(alignedBase);
+    unsigned int maxPtr = memPtr + alignedSize;
+    Node *node = root;
+    unsigned int depth = maxBlockExp;
+    while(depth > minBlockExp){
+        unsigned int half_size = 1 << (depth - 1);
+        unsigned int leftPtr = memPtr;
+        unsigned int rightPtr = memPtr + half_size;
+
+        if(rightPtr == maxPtr){
+            node->right = new Node();
+            node->right->unusable = true;
+            break;
+        } else if(rightPtr < maxPtr){
+            if(b < minBlockExp) {
+                node->right = new Node();
+                node->right->unusable = true;
+                break;
+            }else{
+                node->right = new Node();
+                node = node->right;
+                memPtr = rightPtr;
+                b--;
+            }
+        } else if(rightPtr > maxPtr){
+            node->right = new Node();
+            node->right->unusable = true;
+
+            node->left = new Node();
+            node = node->left;
+            memPtr = leftPtr;
+        }
+        depth--;
+    }
+}
+/** 
+void Buddy::allocateUnusableBlocksIterative(){
+    unsigned int trueMaxBlockExp = maxBlockExp-1;
+    unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
     unsigned int a = alignedSize - trueMaxBlockSize;
     unsigned int b = floor_log2(a);
     
@@ -424,7 +465,7 @@ void Buddy::allocateUnusableBlocksIterative(){
         depth--;
     }
 
-}
+}*/
 
 /**
  * \brief Allocate a memory block in the buddy tree iteratively.
