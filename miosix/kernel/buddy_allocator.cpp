@@ -387,6 +387,10 @@ void Buddy::allocateUnusableBlocksIterative(){
         rightPtr = memPtr + (1 << (depth - 1));
     }
 
+    #ifdef TEST_ALLOC
+    printtBuddy();
+    #endif //TEST_ALLOC
+
     unsigned int trueMaxBlockExp = maxBlockExp-1;
     unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
     unsigned int a = alignedSize - trueMaxBlockSize;
