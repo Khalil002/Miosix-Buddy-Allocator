@@ -752,6 +752,11 @@ void Buddy::printBuddy()
 
 void Buddy::printMetadata() const {
     cout 
+    #ifdef RECURSIVE_IMPLEMENTATION
+        << "Buddy Allocator (Recursive Implementation)" << endl
+    #else
+        << "Buddy Allocator (Iterative Implementation)" << endl
+    #endif
         << "memory pool initialized with base address: " << static_cast<void*>(memBase)
         << ", size: "      << memSize << " bytes" << endl
 
