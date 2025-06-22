@@ -369,10 +369,6 @@ void Buddy::destroyTree(Node* node)
 #else
 
 void Buddy::allocateUnusableBlocksIterative(){
-    unsigned int trueMaxBlockExp = maxBlockExp-1;
-    unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
-    unsigned int a = alignedSize - trueMaxBlockSize;
-    unsigned int b = floor_log2(a);
     
     unsigned int memPtr = reinterpret_cast<unsigned int>(alignedBase);
     unsigned int maxPtr = memPtr + alignedSize;
@@ -382,13 +378,9 @@ void Buddy::allocateUnusableBlocksIterative(){
         unsigned int half_size = 1 << (depth - 1);
         unsigned int leftPtr = memPtr;
         unsigned int rightPtr = memPtr + half_size;
-        unsigned int a2 = maxPtr - rightPtr;
-        unsigned int b2 = floor_log2(a);
+        unsigned int a = maxPtr - rightPtr;
+        unsigned int b  = floor_log2(a);
 
-        if(a==a2 && b==b2){
-            printf("Reached equal size with maxPtr, allocating unusable block at the end of the tree\n");
-            break;
-        }
         if(rightPtr == maxPtr){
             printf("Reached equal size with maxPtr, allocating unusable block at the end of the tree\n");
             node->right = new Node();
