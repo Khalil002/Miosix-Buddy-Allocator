@@ -395,7 +395,7 @@ void Buddy::allocateUnusableBlocksIterative(){
                 node->right = new Node();
                 node = node->right;
                 memPtr = rightPtr;
-                b--;
+                b = b - (depth - 1);
             }
         } else if(rightPtr > maxPtr){
             node->right = new Node();
