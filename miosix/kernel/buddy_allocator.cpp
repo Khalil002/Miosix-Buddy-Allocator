@@ -400,14 +400,16 @@ void Buddy::allocateUnusableBlocksIterative(){
         } else if(rightPtr > maxPtr){
             node->right = new Node();
             node->right->unusable = true;
-
-            node->left = new Node();
-            node = node->left;
-            memPtr = leftPtr;
+            
+            if(depth > minBlockExp+1){
+                node->left = new Node();
+                node = node->left;
+                memPtr = leftPtr;
+            }
         }
         depth--;
     }
-}
+} //536931328 2000E801
 /** 
 void Buddy::allocateUnusableBlocksIterative(){
     unsigned int trueMaxBlockExp = maxBlockExp-1;
