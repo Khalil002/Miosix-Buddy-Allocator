@@ -385,8 +385,10 @@ void Buddy::allocateUnusableBlocksIterative(){
         unsigned int a2 = maxPtr - rightPtr;
         unsigned int b2 = floor_log2(a);
 
-        printf(" a = %u, b = %u, a2 = %u, b2 = %u, depth = %u, memPtr = %u, leftPtr = %u, rightPtr = %u, maxPtr = %u\n", 
-               a, b, a2, b2, depth, memPtr, leftPtr, rightPtr, maxPtr);
+        if(a==a2 && b==b2){
+            printf("Reached equal size with maxPtr, allocating unusable block at the end of the tree\n");
+            break;
+        }
         if(rightPtr == maxPtr){
             printf("Reached equal size with maxPtr, allocating unusable block at the end of the tree\n");
             node->right = new Node();
