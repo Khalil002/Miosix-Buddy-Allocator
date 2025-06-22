@@ -64,7 +64,11 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize, unsigned int minBlockE
     // to make sure the tree does not cover memory locations outside the memory pool
     if(alignedSize < maxBlockSize) {
         this->isRootUnusable = true; //The entire memory pool is not allowable for allocation
+        #ifdef RECURSIVE_IMPLEMENTATION
+        allocateUnusableBlocks(root, maxBlockExp, alignedBaseValue, alignedBaseValue + alignedSize);
+        #else
         allocateUnusableBlocksIterative();
+        #endif
     }
 }
 
@@ -217,6 +221,46 @@ unsigned int Buddy::floor_log2(unsigned int x)
     return e;
 }
 #ifdef RECURSIVE_IMPLEMENTATION
+
+void Buddy::allocateUnusableBlocks(Node* node, unsigned int depth, unsigned int memPtr, unsigned int maxPtr) {
+    if (depth <= minBlockExp) return;
+
+    unsigned int half_size = 1 << (depth - 1);
+    unsigned int leftPtr = memPtr;
+    unsigned int rightPtr = memPtr + half_size;
+    unsigned int remaining = maxPtr - rightPtr;
+    unsigned int remainingExp = floor_log2(remaining);
+
+    // Case 1: Right block perfectly fits the remaining memory
+    if (rightPtr == maxPtr) {
+        node->right = new Node();
+        node->right->unusable = true;
+        return;
+    }
+
+    // Case 2: Right block partially fits (still inside bounds)
+    if (rightPtr < maxPtr) {
+        node->right = new Node();
+        if (remainingExp < minBlockExp) {
+            node->right->unusable = true;
+            return;
+        }
+        // Recurse right
+        allocateUnusableBlocks(node->right, depth - 1, rightPtr, maxPtr);
+        return;
+    }
+
+    // Case 3: Right block exceeds the usable region
+    node->right = new Node();
+    node->right->unusable = true;
+
+    // Only build left subtree if more levels are available
+    if (depth > minBlockExp + 1) {
+        node->left = new Node();
+        allocateUnusableBlocks(node->left, depth - 1, leftPtr, maxPtr);
+    }
+}
+
 /**
  * \brief Recursively allocate a memory block in the buddy tree.
  * This function traverses the buddy tree to find a suitable block for allocation.
@@ -368,6 +412,9 @@ void Buddy::destroyTree(Node* node)
 
 #else
 
+/** 
+ * \brief Allocate unusable blocks in the buddy tree iteratively.
+ */
 void Buddy::allocateUnusableBlocksIterative() {
     unsigned int memPtr = reinterpret_cast<unsigned int>(alignedBase);
     unsigned int maxPtr = memPtr + alignedSize;

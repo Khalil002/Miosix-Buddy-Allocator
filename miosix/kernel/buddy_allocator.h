@@ -78,6 +78,7 @@ private:
     unsigned int ceiling_log2(unsigned int x);
     unsigned int floor_log2(unsigned int x);
     #ifdef RECURSIVE_IMPLEMENTATION
+    void allocateUnusableBlocks(Node* node, unsigned int depth, unsigned int memPtr, unsigned int maxPtr);
     unsigned int *allocate(Node *node, unsigned int targetExp, unsigned int depthExp, unsigned int memPtrValue, bool newNode=false);
     unsigned int *allocateSpecific(Node *node, unsigned int targetExp, unsigned int targetPtrValue, unsigned int depthExp, unsigned int memPtrValue, bool newNode=false);
     unsigned int deallocate(Node *parentNode, Node *node, unsigned int targetPtr, unsigned int depthExp, unsigned int memPtr, bool isLeft);
