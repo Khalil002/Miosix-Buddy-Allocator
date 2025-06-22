@@ -211,6 +211,10 @@ unsigned int Buddy::ceiling_log2(unsigned int x)
     return e;
 }
 
+/**
+ * Calculate the floor of log base 2 of a number.
+ * This function returns the largest uint e such that 2^e <= x.
+ */
 unsigned int Buddy::floor_log2(unsigned int x)
 {
     if (x == 0) return 0;
@@ -222,6 +226,14 @@ unsigned int Buddy::floor_log2(unsigned int x)
 }
 #ifdef RECURSIVE_IMPLEMENTATION
 
+/**
+ * \brief Recursively allocate unusable blocks in the buddy tree.
+ * This function traverses the buddy tree to allocate unusable blocks based on the memory pool size.
+ * \param node Pointer to the current node in the buddy tree.
+ * \param depth The current depth in the buddy tree.
+ * \param memPtr The memory pointer value of the current node.
+ * \param maxPtr The maximum pointer value of the memory pool.
+ */
 void Buddy::allocateUnusableBlocks(Node* node, unsigned int depth, unsigned int memPtr, unsigned int maxPtr) {
     if (depth <= minBlockExp) return;
 
