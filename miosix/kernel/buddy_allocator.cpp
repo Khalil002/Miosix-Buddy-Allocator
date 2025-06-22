@@ -64,15 +64,7 @@ Buddy::Buddy(unsigned int *memBase, unsigned int memSize, unsigned int minBlockE
     // to make sure the tree does not cover memory locations outside the memory pool
     if(alignedSize < maxBlockSize) {
         this->isRootUnusable = true; //The entire memory pool is not allowable for allocation
-        unsigned int unusableSize = maxBlockSize-alignedSize;
-        unsigned int unusableExp = ceiling_log2(unusableSize);
-        unsigned int n = maxBlockExp - unusableExp;
-        Node *node = root;
-        for(unsigned int i = 0; i < n; i++){
-            node->right = new Node();
-            node = node->right; // Move to the right child
-        }
-        node->unusable = true;
+        allocateUnusableBlocksIterative();
     }
 }
 
@@ -215,6 +207,15 @@ unsigned int Buddy::ceiling_log2(unsigned int x)
     return e;
 }
 
+unsigned int Buddy::floor_log2(unsigned int x)
+{
+    if (x == 0) return 0;
+    unsigned int e = 0;
+    while (x >>= 1) {
+        ++e;
+    }
+    return e;
+}
 #ifdef RECURSIVE_IMPLEMENTATION
 /**
  * \brief Recursively allocate a memory block in the buddy tree.
@@ -366,6 +367,50 @@ void Buddy::destroyTree(Node* node)
 }
 
 #else
+
+void Buddy::allocateUnusableBlocksIterative(){
+
+    //Reach the edge of the actual pool
+    Node *node = root;
+    unsigned int depth = maxBlockExp;
+    unsigned int memPtr = reinterpret_cast<unsigned int>(alignedBase);
+    unsigned int leftPtr = memPtr;
+    unsigned int rightPtr = memPtr + (1 << (depth - 1));
+    unsigned int maxPtr = memPtr + alignedSize;
+    while(rightPtr < maxPtr) {
+        node->right = new Node();
+        node = node->right;
+        memPtr = rightPtr;
+        depth--;
+        leftPtr = memPtr;
+        rightPtr = memPtr + (1 << (depth - 1));
+    }
+
+    // Simple case: 1 unusable block at the end of the tree
+    if(rightPtr == maxPtr) {
+        node->right = new Node();
+        node->right->unusable = true;
+        return;
+    }
+
+    // Complex case: multiple unusable blocks
+    unsigned int trueMaxBlockExp = maxBlockExp-1;
+    unsigned int trueMaxBlockSize = 1 << trueMaxBlockExp;
+    unsigned int a = alignedSize - trueMaxBlockSize;
+    unsigned int b = floor_log2(a);
+
+    while(depth > b){
+        node->right = new Node();
+        node->right->unusable = true;
+
+        if(depth > b+1){
+            node->left = new Node();
+            node = node->left;
+        }
+        depth--;
+    }
+}
+
 /**
  * \brief Allocate a memory block in the buddy tree iteratively.
  * This function traverses the buddy tree to find a suitable block for allocation using an iterative approach.
