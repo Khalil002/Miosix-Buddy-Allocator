@@ -412,7 +412,7 @@ void Buddy::allocateUnusableBlocksIterative(){
     }
 
     // Complex case: multiple unusable blocks
-    printf("Complex case: Allocating unusable blocks from %u to %u\n", trueMaxBlockExp, b);
+    printf("Complex case: Allocating unusable blocks from %u to %u\n", depth, b);
     while(depth > b){
         node->right = new Node();
         node->right->unusable = true;
