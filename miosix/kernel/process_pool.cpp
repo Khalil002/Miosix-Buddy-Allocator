@@ -39,13 +39,11 @@ using namespace std;
 
 namespace miosix {
 
-#ifndef BMA
 ///This constant specifies the size of the minimum allocatable block,
 ///in bits. So for example 10 is 1KB.
 static const unsigned int blockBits=10;
 ///This constant is the the size of the minimum allocatable block, in bytes.
 static const unsigned int blockSize=1<<blockBits;
-#endif //BMA
 
 ProcessPool& ProcessPool::instance()
 {
