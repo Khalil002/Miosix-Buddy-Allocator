@@ -19,7 +19,7 @@ In Miosix OS, the buddy_allocator.cpp is utilized by process_pool.cpp internally
 
 If you wish to use the buddy allocator in your own code, here is an example:
 
-Copy the files:
+Copy the following files from the miosix kernel, into your project:
 - buddy_allocator.cpp
 - buddy_allocator.h
   
