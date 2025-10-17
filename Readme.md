@@ -1,6 +1,6 @@
 
 # Miosix-Buddy-Allocator
-A C++ buddy memory allocator, built for the Miosix OS
+A C++ buddy memory allocator, built for the <a href="http://miosix.org">Miosix OS</a>
 
 ## Overview
 
@@ -18,7 +18,12 @@ For more information on the buddy algorithm, check the <a href="https://en.wikip
 In Miosix OS, the buddy_allocator.cpp is utilized by process_pool.cpp internally when you call for allocation, deallocation and reallocation when compiled with the BMA flag.
 
 If you wish to use the buddy allocator in your own code, here is an example:
-- Initialization
+
+Copy the files:
+- buddy_allocator.cpp
+- buddy_allocator.h
+  
+Initialization
 ```c
 #include "buddy_allocator.h"
 
@@ -28,7 +33,7 @@ unsigned int minBlockExp = 10;
 Buddy buddy = new Buddy(memBase, memSize, minBlockExp);
 ```
 
-- Allocation and Deallocation
+Allocation and Deallocation
 ```c
 unsigned int size = 1025; //Size in bytes
 pair<unsigned int *, unsigned int> res = buddy.allocate(size); //Returns the pointer and the size of the block allocated
@@ -37,7 +42,7 @@ unsigned int* ptr = res.first;
 buddy.deallocate(ptr)
 ```
 
-- Allocation and Reallocation
+Allocation and Reallocation
 ```c
 unsigned int size = 1025; //Size in bytes
 pair<unsigned int *, unsigned int> res = buddy.allocate(size);
@@ -46,9 +51,4 @@ unsigned int* ptr = res.first;
 unsigned int newSize = 4096; //Size in bytes
 unsigned int* newPtr = buddy.reallocate(ptr, newSize);
 ```
-
-## Miosix OS
-
-You can find information on how to configure and use the kernel
-at the following url: http://miosix.org
 
