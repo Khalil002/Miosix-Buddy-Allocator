@@ -1,5 +1,5 @@
 
-# Miosix_Buddy_Allocator
+# Miosix-Buddy-Allocator
 A buddy memory allocator for C++, built for the Miosix OS
 
 ## Overview
